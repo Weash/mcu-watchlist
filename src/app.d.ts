@@ -26,12 +26,6 @@ declare global {
 				ACCESS_TEAM_DOMAIN: string;
 				ACCESS_AUD: string;
 				OWNER_SUB: string;
-				TMDB_API_KEY: string;
-				/**
-				 * Bearer token for /api/*, used by the scheduled Claude routine.
-				 * Unset closes the API entirely.
-				 */
-				SYNC_TOKEN?: string;
 				/** Local development only — see hooks.server.ts. */
 				DEV_USER_SUB?: string;
 			};

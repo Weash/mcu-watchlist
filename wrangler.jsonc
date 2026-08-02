@@ -36,12 +36,6 @@
 		"enabled": true
 	}
 
-	// There is no cron trigger. The weekly sync is driven by a scheduled Claude
-	// routine calling POST /api/sync — see docs/sync-routine.md.
-	//
 	// Secrets — set with `npx wrangler secret put <NAME>`, never in this file:
 	//   OWNER_SUB     your Google identity's `sub` claim (gates /admin)
-	//   TMDB_API_KEY  TMDB API Read Access Token (v4 bearer)
-	//   SYNC_TOKEN    bearer token the routine authenticates with.
-	//                 Unset closes /api/* entirely.
 }

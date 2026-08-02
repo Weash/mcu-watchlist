@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { getDb } from '$lib/server/db';
-import { films, watches, discoveries } from '$lib/server/db/schema';
+import { films, watches } from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export interface FilmRow {
@@ -93,24 +93,12 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 	const released = rows.filter((r) => r.releaseDate <= now);
 	const seenCount = released.filter((r) => r.watchedAt !== null).length;
 
-	// Only the owner sees the admin affordance, so only the owner pays for
-	// this count.
-	let pendingDiscoveries = 0;
-	if (locals.user.isOwner) {
-		const [{ count }] = await db
-			.select({ count: sql<number>`count(*)` })
-			.from(discoveries)
-			.where(eq(discoveries.status, 'pending'));
-		pendingDiscoveries = Number(count);
-	}
-
 	return {
 		sagas,
 		totalFilms: rows.length,
 		releasedCount: released.length,
 		seenCount,
-		isOwner: locals.user.isOwner,
-		pendingDiscoveries
+		isOwner: locals.user.isOwner
 	};
 };
 

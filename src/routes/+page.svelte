@@ -117,10 +117,8 @@
 					<a
 						href="/admin"
 						title="Admin"
-						aria-label={data.pendingDiscoveries > 0
-							? `Admin — ${data.pendingDiscoveries} pending discoveries`
-							: 'Admin'}
-						class="relative -m-1.5 p-1.5 text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+						aria-label="Admin"
+						class="-m-1.5 p-1.5 text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 					>
 						<svg
 							viewBox="0 0 16 16"
@@ -132,13 +130,6 @@
 								d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1M12.6 12.6l-1.1-1.1M4.5 4.5L3.4 3.4"
 							/>
 						</svg>
-						{#if data.pendingDiscoveries > 0}
-							<span
-								class="absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-phase-1 font-mono text-[9px] leading-none font-semibold text-paper"
-							>
-								{data.pendingDiscoveries > 9 ? '9+' : data.pendingDiscoveries}
-							</span>
-						{/if}
 					</a>
 				{/if}
 			</div>

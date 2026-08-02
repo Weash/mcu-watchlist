@@ -4,11 +4,3 @@
 # as the identity. This value only needs to be stable — it is the key your
 # local ticks are stored under.
 DEV_USER_SUB="dev-user"
-
-# Bearer token for /api/*, which the scheduled Claude routine authenticates
-# with. If this is unset the whole API surface returns 404 rather than being
-# open. Use a long random value in production (`openssl rand -hex 32`).
-SYNC_TOKEN="local-dev-token"
-
-# TMDB API Read Access Token (v4 bearer). Only needed to run a real sync.
-TMDB_API_KEY=""
