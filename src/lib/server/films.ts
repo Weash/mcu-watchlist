@@ -137,6 +137,23 @@ export async function deleteFilm(db: Db, id: number): Promise<Film | undefined> 
 	return film;
 }
 
+/**
+ * Which saga each existing phase belongs to.
+ *
+ * Feeds the Add and Edit forms, where picking a phase fills in the saga. Built
+ * from the highest-numbered film in each phase, so if a phase ever did span
+ * two sagas the later one wins — a tie-break that will not come up, since
+ * none ever has.
+ */
+export async function sagaByPhase(db: Db): Promise<Record<number, string>> {
+	const rows = await db
+		.select({ phase: films.phase, saga: films.saga })
+		.from(films)
+		.orderBy(films.phase);
+
+	return Object.fromEntries(rows.map((r) => [r.phase, r.saga]));
+}
+
 export async function countFilms(db: Db): Promise<number> {
 	const [{ total }] = await db.select({ total: sql<number>`count(*)` }).from(films);
 	return Number(total);

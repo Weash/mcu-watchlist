@@ -4,6 +4,10 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	// Vite ignores PORT and hunts for a free port from 5173 upwards, which
+	// leaves tooling that assigned one pointing at nothing.
+	server: process.env.PORT ? { port: Number(process.env.PORT), strictPort: true } : undefined,
+
 	plugins: [
 		tailwindcss(),
 		sveltekit({
