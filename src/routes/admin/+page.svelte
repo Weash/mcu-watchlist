@@ -89,7 +89,7 @@
 				name="title"
 				required
 				maxlength="200"
-				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			/>
 		</label>
 
@@ -99,7 +99,7 @@
 				name="releaseDate"
 				type="date"
 				required
-				class="w-48 rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="w-48 rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			/>
 			<span class="font-mono text-2xs tracking-note text-muted">
 				US theatrical. A date after {fmt(today)} renders the film as upcoming.
@@ -115,7 +115,7 @@
 				required
 				rows="2"
 				maxlength="300"
-				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			></textarea>
 			<span class="font-mono text-2xs tracking-note text-muted">
 				One line, present tense, no spoilers past the premise.

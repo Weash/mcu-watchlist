@@ -58,7 +58,7 @@
 				value={data.film.title}
 				required
 				maxlength="200"
-				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			/>
 		</label>
 
@@ -69,7 +69,7 @@
 				type="date"
 				value={data.film.releaseDate}
 				required
-				class="w-48 rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="w-48 rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			/>
 			<span class="font-mono text-2xs tracking-note text-muted">
 				The one field nothing else corrects. Marvel moves these.
@@ -85,7 +85,7 @@
 				required
 				rows="2"
 				maxlength="300"
-				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 				>{data.film.description}</textarea
 			>
 		</label>
