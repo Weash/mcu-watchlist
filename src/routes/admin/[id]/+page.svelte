@@ -111,7 +111,9 @@
 		</summary>
 
 		<div class="mt-3">
-			<p class="font-mono text-xs leading-relaxed text-body">
+			<p
+				class="rounded-xs border border-phase-1 px-3 py-2 font-mono text-xs leading-relaxed text-phase-1"
+			>
 				Delete <b class="font-semibold">{data.film.title}</b> permanently? This also removes your
 				tick for it.
 			</p>
@@ -119,7 +121,7 @@
 			<form method="POST" action="?/delete" use:enhance class="mt-3">
 				<button
 					type="submit"
-					class="rounded-xs border border-phase-1 bg-phase-1 px-3 py-2 font-mono text-xs tracking-button text-paper uppercase hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+					class="rounded-xs border border-phase-1 bg-transparent px-3 py-2 font-mono text-xs tracking-button text-phase-1 uppercase hover:bg-phase-1 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 				>
 					Delete permanently
 				</button>
