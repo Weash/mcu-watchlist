@@ -5,11 +5,11 @@ import { films, watches } from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export interface FilmRow {
-	id: string;
+	id: number;
 	title: string;
 	releaseDate: string;
 	year: number;
-	description: string | null;
+	description: string;
 	/** Derived from release_date, never stored — see the schema comment. */
 	upcoming: boolean;
 	seen: boolean;
@@ -113,10 +113,10 @@ export const actions: Actions = {
 	toggle: async ({ request, locals, platform }) => {
 		const db = getDb(platform);
 		const form = await request.formData();
-		const filmId = form.get('filmId');
+		const filmId = Number(form.get('filmId'));
 		const next = form.get('next');
 
-		if (typeof filmId !== 'string' || !filmId) {
+		if (!Number.isInteger(filmId)) {
 			return fail(400, { message: 'Missing film' });
 		}
 

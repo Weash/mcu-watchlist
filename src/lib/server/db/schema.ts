@@ -1,28 +1,20 @@
 import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core';
 
 /**
- * Films.
- *
- * Ownership is split deliberately:
- *   - TMDB owns   title, release_date, poster_path, runtime
- *   - You own     saga, phase, description
- *
- * The weekly sync writes only the first group. `saga` and `phase` are
- * editorial — TMDB has no concept of MCU phases — and `description` is
- * generated once and then left alone. See src/lib/server/sync.ts.
+ * Films. Hand-managed through /admin — nothing writes here but you.
  */
 export const films = sqliteTable(
 	'films',
 	{
-		/** Stable slug, e.g. "ironman". Referenced by watches, so never rewritten. */
-		id: text('id').primaryKey(),
-
-		/** TMDB's id. Null until backfilled; the sync matches on this. */
-		tmdbId: integer('tmdb_id').unique(),
+		/**
+		 * Surrogate key. Never displayed except in the /admin/[id] URL, which
+		 * you reach by clicking a row, so it carries no meaning and needs none.
+		 */
+		id: integer('id').primaryKey({ autoIncrement: true }),
 
 		/**
-		 * Always 'movie' today. Present so adding TV later is a migration
-		 * rather than a rewrite.
+		 * Always 'movie' today, and not on any form. Present so adding TV later
+		 * is a migration rather than a rewrite.
 		 */
 		mediaType: text('media_type', { enum: ['movie', 'tv'] })
 			.notNull()
@@ -37,26 +29,29 @@ export const films = sqliteTable(
 		 *
 		 * This is also the sort key — it replaces an explicit sort_order,
 		 * since release dates are unique per film.
+		 *
+		 * Editing this by hand is the only thing keeping the page correct now
+		 * that nothing refreshes it: Marvel moves dates, and a stale one makes
+		 * a film silently stop rendering as upcoming.
 		 */
 		releaseDate: text('release_date').notNull(),
 
-		/** One-line summary. Null means the sync should generate one. */
-		description: text('description'),
+		/** One line, in the voice of the page. Required — see the Add form. */
+		description: text('description').notNull(),
 
 		/**
-		 * Where the description came from. Lets you see at a glance which rows
-		 * still have machine-written copy.
+		 * Saga is really a property of the phase — no phase has ever spanned
+		 * two — but it is stored per film rather than normalised into a
+		 * `phases` table, which would be a table, a migration and an admin
+		 * surface for something that changes once every three years. The Add
+		 * form defends the invariant by deriving both from the current phase.
 		 */
-		descriptionSource: text('description_source', {
-			enum: ['authored', 'generated', 'tmdb']
-		}),
-
 		saga: text('saga').notNull(),
+
+		/** 1..N. Colours for 1-6 are design tokens in app.css, not stored. */
 		phase: integer('phase').notNull(),
 
-		/** TMDB poster path fragment, e.g. "/abc123.jpg". Not rendered yet. */
-		posterPath: text('poster_path'),
-
+		/** When you last edited this row. */
 		updatedAt: text('updated_at')
 			.notNull()
 			.$defaultFn(() => new Date().toISOString())
@@ -74,7 +69,7 @@ export const watches = sqliteTable(
 	'watches',
 	{
 		userSub: text('user_sub').notNull(),
-		filmId: text('film_id')
+		filmId: integer('film_id')
 			.notNull()
 			.references(() => films.id, { onDelete: 'cascade' }),
 		watchedAt: text('watched_at')
@@ -87,45 +82,5 @@ export const watches = sqliteTable(
 	]
 );
 
-/**
- * Films the weekly sync saw under TMDB keyword 180547 that aren't in `films`.
- *
- * Nothing here is ever auto-inserted — keyword 180547 is community-maintained
- * and includes specials, documentaries and mistags. These surface in /admin
- * for you to add (supplying phase + saga) or ignore.
- */
-export const discoveries = sqliteTable('discoveries', {
-	tmdbId: integer('tmdb_id').primaryKey(),
-	title: text('title').notNull(),
-	mediaType: text('media_type', { enum: ['movie', 'tv'] })
-		.notNull()
-		.default('movie'),
-	releaseDate: text('release_date'),
-	posterPath: text('poster_path'),
-	overview: text('overview'),
-	firstSeenAt: text('first_seen_at')
-		.notNull()
-		.$defaultFn(() => new Date().toISOString()),
-	/** 'pending' shows in /admin; the others are resolved and stay as a record. */
-	status: text('status', { enum: ['pending', 'ignored', 'added'] })
-		.notNull()
-		.default('pending')
-});
-
-/**
- * Single-row record of the last sync.
- *
- * The sync runs outside this app (a scheduled Claude routine calling
- * /api/sync), so if it stops running nothing breaks visibly — release dates
- * just quietly go stale. This row is what makes that failure visible: /admin
- * shows how long ago the last successful run was.
- */
-export const syncState = sqliteTable('sync_state', {
-	id: integer('id').primaryKey(),
-	lastRunAt: text('last_run_at').notNull(),
-	/** The SyncReport as JSON, for a glance at what the last run did. */
-	lastReport: text('last_report').notNull()
-});
-
 export type Film = typeof films.$inferSelect;
-export type Discovery = typeof discoveries.$inferSelect;
+export type NewFilm = typeof films.$inferInsert;

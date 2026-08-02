@@ -13,7 +13,7 @@
 	 * function has returned the real value. On failure we drop it immediately
 	 * and surface the error the design already accounts for.
 	 */
-	let overrides = $state<Record<string, boolean>>({});
+	let overrides = $state<Record<number, boolean>>({});
 	let saveError = $state(false);
 	let hideSeen = $state(false);
 
@@ -63,7 +63,7 @@
 	const allPhases = $derived(view.sagas.flatMap((s) => s.phases));
 
 	const submitToggle: SubmitFunction = ({ formData }) => {
-		const id = String(formData.get('filmId'));
+		const id = Number(formData.get('filmId'));
 		const next = formData.get('next') === 'true';
 
 		overrides[id] = next;

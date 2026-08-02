@@ -10,7 +10,11 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"moduleResolution": "bundler"
+		"moduleResolution": "bundler",
+		// The Worker runtime has no Node globals, but the test harness runs in
+		// Node and reads the migration files off disk. Anything server-side is
+		// still bound by what the Worker actually provides.
+		"types": ["node", "@cloudflare/workers-types"]
 	}
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
