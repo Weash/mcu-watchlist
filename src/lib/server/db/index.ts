@@ -1,8 +1,17 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { error } from '@sveltejs/kit';
+import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import * as schema from './schema';
 
-export type Db = ReturnType<typeof getDb>;
+/**
+ * A Drizzle client, whichever driver is underneath.
+ *
+ * Deliberately not `ReturnType<typeof getDb>`: that would pin it to the D1
+ * driver, and the tests run the same query code against node:sqlite. Both are
+ * async SQLite, so the structural type covers them and neither leaks into the
+ * other's build.
+ */
+export type Db = BaseSQLiteDatabase<'async', unknown, typeof schema>;
 
 /**
  * Builds a Drizzle client over the request's D1 binding.

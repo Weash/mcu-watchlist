@@ -63,18 +63,12 @@ export interface TestDb {
 	close(): void;
 }
 
-/**
- * A fresh database with every journalled migration applied.
- *
- * @param upTo apply only the first N migrations, for asserting on an
- *             intermediate schema.
- */
-export function createTestDb(upTo?: number): TestDb {
+/** A fresh database with every migration applied, exactly as deployed. */
+export function createTestDb(): TestDb {
 	const raw = new DatabaseSync(':memory:');
 	raw.exec('PRAGMA foreign_keys = ON;');
 
-	const files = migrationFiles().slice(0, upTo ?? Infinity);
-	for (const file of files) {
+	for (const file of migrationFiles()) {
 		const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf8');
 		for (const statement of splitStatements(sql)) raw.exec(statement);
 	}
