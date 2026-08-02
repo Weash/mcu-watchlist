@@ -1,0 +1,47 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mcu-watchlist",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2026-08-01",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// Served from <name>.<subdomain>.workers.dev. Cloudflare Access is applied
+	// to this hostname via the "Enable Cloudflare Access" toggle in the Workers
+	// dashboard, which creates the Access application.
+	"workers_dev": true,
+
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "mcu-watchlist",
+			"database_id": "7ca7ab5b-5f85-4171-98e7-3a20a3a024ea",
+			"migrations_dir": "drizzle"
+		}
+	],
+
+	"vars": {
+		"ACCESS_TEAM_DOMAIN": "whofstra.cloudflareaccess.com",
+		// The Access application's Audience (AUD) tag. Per-application: this is
+		// what stops a token minted for another Access app in the same account
+		// — same team domain, same signing key — from being accepted here.
+		"ACCESS_AUD": "49281ae929cd20925f1eecf02a7da1f225d597efdd83e6c35f031e9dc9a18433"
+	},
+
+	"observability": {
+		"enabled": true
+	}
+
+	// There is no cron trigger. The weekly sync is driven by a scheduled Claude
+	// routine calling POST /api/sync — see docs/sync-routine.md.
+	//
+	// Secrets — set with `npx wrangler secret put <NAME>`, never in this file:
+	//   OWNER_SUB     your Google identity's `sub` claim (gates /admin)
+	//   TMDB_API_KEY  TMDB API Read Access Token (v4 bearer)
+	//   SYNC_TOKEN    bearer token the routine authenticates with.
+	//                 Unset closes /api/* entirely.
+}
