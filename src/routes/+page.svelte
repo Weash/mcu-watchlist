@@ -109,8 +109,28 @@
 	<div class="mx-auto max-w-page px-5">
 		<header class="pt-8 pb-4">
 			<div class="flex items-center justify-between gap-3">
-				<div class="font-mono text-2xs tracking-label text-muted uppercase">
-					Marvel Cinematic Universe · {data.totalFilms} films
+				<div class="flex items-center gap-2.5">
+					<svg viewBox="0 0 512 512" class="size-8 flex-none rounded-[9px]" aria-hidden="true">
+						<rect width="512" height="512" rx="112" fill="var(--color-ink)" />
+						<circle cx="133" cy="189" r="42" fill="var(--color-phase-1)" />
+						<circle cx="256" cy="189" r="42" fill="var(--color-phase-2)" />
+						<circle cx="379" cy="189" r="42" fill="var(--color-phase-3)" />
+						<circle cx="133" cy="325" r="42" fill="var(--color-phase-4)" />
+						<circle cx="256" cy="325" r="42" fill="var(--color-phase-5)" />
+						<circle
+							cx="379"
+							cy="325"
+							r="40"
+							fill="none"
+							stroke="var(--color-phase-6)"
+							stroke-width="9"
+							stroke-dasharray="10 9.5"
+							stroke-linecap="round"
+						/>
+					</svg>
+					<div class="font-mono text-2xs tracking-label text-muted uppercase">
+						Marvel Cinematic Universe · {data.totalFilms} films
+					</div>
 				</div>
 
 				{#if data.isOwner}
