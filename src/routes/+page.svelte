@@ -4,6 +4,7 @@
 	import Stars from '$lib/Stars.svelte';
 	import RatingDialog from '$lib/RatingDialog.svelte';
 	import PosterDialog from '$lib/PosterDialog.svelte';
+	import MovieRow from '$lib/MovieRow.svelte';
 	import type { FilmRow } from './+page.server';
 
 	let { data } = $props();
@@ -303,194 +304,55 @@
 										{/snippet}
 
 										{#if film.upcoming}
-											{#snippet upcomingTitle()}
+											{#snippet upcomingButton()}
 												<div
-													class="font-display text-xl leading-rowtitle font-bold text-muted uppercase"
-												>
-													{film.title}
-												</div>
-											{/snippet}
-
-											{#snippet upcomingDetails()}
-												<p class="text-sm leading-snug text-body">
-													{film.description}
-												</p>
-												<div class="mt-1 font-mono text-2xs tracking-tag text-muted uppercase">
-													{film.duration} MIN / DIR. {film.director}
-												</div>
-												<span
-													class="mt-1 inline-block rounded-xs border border-current px-1.5 py-0.5 font-mono text-2xs tracking-tag uppercase"
-												>
-													In theaters {dateFormatter.format(
-														new Date(film.releaseDate + 'T00:00:00Z')
-													)}
-												</span>
+													aria-hidden="true"
+													class="flex size-7 flex-none items-center justify-center rounded-full border-2 border-dashed border-current opacity-50"
+												></div>
 											{/snippet}
 
 											<div
 												class="border-b border-rule py-2.5 pr-1"
 												style:color={phaseColor(phase.phase)}
 											>
-												<!-- Below sm: stacked, description/specs full width. -->
-												<div class="sm:hidden">
-													<div class="flex items-start gap-3">
-														<div
-															class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
-														></div>
-														{@render poster('opacity-50')}
-														<div class="min-w-0 flex-1">
-															{@render upcomingTitle()}
+												<div class="flex items-start gap-3">
+													{@render poster('opacity-50')}
+													<div class="min-w-0 flex-1">
+														<div class="flex items-center gap-2">
+															<div
+																class="min-w-0 flex-1 font-display text-xl leading-rowtitle font-bold text-muted uppercase"
+															>
+																{film.title}
+															</div>
+															{@render upcomingButton()}
 														</div>
-													</div>
-													<div class="mt-2">
-														{@render upcomingDetails()}
+														<div
+															class="mt-1 font-mono text-2xs tracking-tag text-muted uppercase"
+														>
+															{film.duration} MIN / DIR. {film.director}
+														</div>
+														<span
+															class="mt-1 inline-block rounded-xs border border-current px-1.5 py-0.5 font-mono text-2xs tracking-tag uppercase"
+														>
+															In theaters {dateFormatter.format(
+																new Date(film.releaseDate + 'T00:00:00Z')
+															)}
+														</span>
 													</div>
 												</div>
 
-												<!-- sm and up: everything in one row, as before. -->
-												<div class="hidden items-start gap-3 sm:flex">
-													<div
-														class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
-													></div>
-													{@render poster('opacity-50')}
-													<div class="min-w-0 flex-1">
-														{@render upcomingTitle()}
-														<div class="mt-0.5">
-															{@render upcomingDetails()}
-														</div>
-													</div>
+												<div class="mt-2">
+													<p class="text-sm leading-snug text-body">{film.description}</p>
 												</div>
 											</div>
 										{:else}
-											{#snippet checkbox()}
-												<form
-													method="POST"
-													action="?/toggle"
-													use:enhance={submitToggle}
-													class="mt-0.5 flex-none"
-												>
-													<input type="hidden" name="filmId" value={film.id} />
-													<input type="hidden" name="next" value={String(!film.seen)} />
-													<button
-														type="submit"
-														aria-pressed={film.seen}
-														aria-label="Mark {film.title} as {film.seen ? 'not seen' : 'seen'}"
-														class="flex size-5 cursor-pointer items-center justify-center rounded-[3px] border-2 border-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-														class:bg-current={film.seen}
-													>
-														{#if film.seen}
-															<svg
-																viewBox="0 0 14 14"
-																class="size-3 fill-none stroke-paper stroke-[3.5]"
-																aria-hidden="true"
-															>
-																<polyline points="2,7.5 5.5,11 12,3.5" />
-															</svg>
-														{/if}
-													</button>
-												</form>
-											{/snippet}
-
-											{#snippet titleLine()}
-												<span
-													class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
-														? 'text-muted'
-														: 'text-ink'}"
-												>
-													{film.title}<span
-														class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
-													>
-														{film.year}
-													</span>
-												</span>
-											{/snippet}
-
-											{#snippet ratingRow()}
-												<Stars
-													filmId={film.id}
-													rating={film.rating}
-													color={phaseColor(phase.phase)}
-												/>
-												{#if film.watchedAt}
-													<span class="font-mono text-2xs text-muted">
-														{dateFormatter.format(new Date(film.watchedAt))}
-													</span>
-												{/if}
-											{/snippet}
-
-											{#snippet details()}
-												<p
-													class="text-sm leading-snug text-body"
-													class:opacity-55={film.seen}
-												>
-													{film.description}
-												</p>
-
-												{#if film.seen}
-													<details class="mt-1.5">
-														<summary
-															class="inline-block cursor-pointer font-mono text-2xs tracking-button text-muted uppercase select-none hover:text-ink"
-														>
-															Show recap
-														</summary>
-														<p class="mt-1.5 max-w-prose text-sm leading-snug text-body">
-															{film.recap}
-														</p>
-													</details>
-												{/if}
-
-												<div class="mt-1.5 font-mono text-2xs tracking-tag text-muted uppercase">
-													{film.duration} MIN / DIR. {film.director}
-													{#if film.seen}
-														· {film.postCreditsScenes === 0
-															? 'No post-credits scene'
-															: `${film.postCreditsScenes} post-credits scene${film.postCreditsScenes === 1 ? '' : 's'}`}
-													{/if}
-												</div>
-											{/snippet}
-
-											<div
-												class="border-b border-rule py-2.5 pr-1"
-												style:color={phaseColor(phase.phase)}
-											>
-												<!-- Below sm: checkbox/poster/title+rating on top, description/recap/specs full width below. -->
-												<div class="sm:hidden">
-													<div class="flex items-start gap-3">
-														{@render checkbox()}
-														{@render poster(film.seen ? 'opacity-55' : '')}
-														<div class="min-w-0 flex-1">
-															{@render titleLine()}
-															{#if film.seen}
-																<div class="mt-1 flex flex-wrap items-center gap-2">
-																	{@render ratingRow()}
-																</div>
-															{/if}
-														</div>
-													</div>
-													<div class="mt-2">
-														{@render details()}
-													</div>
-												</div>
-
-												<!-- sm and up: checkbox, poster, description column, rating column, as before. -->
-												<div class="hidden items-start gap-3 sm:flex">
-													{@render checkbox()}
-													{@render poster(film.seen ? 'opacity-55' : '')}
-													<div class="min-w-0 flex-1">
-														{@render titleLine()}
-														<div class="mt-0.5">
-															{@render details()}
-														</div>
-													</div>
-													{#if film.seen}
-														<div
-															class="flex flex-none flex-col items-end gap-1 pt-0.5 text-right"
-														>
-															{@render ratingRow()}
-														</div>
-													{/if}
-												</div>
-											</div>
+											<MovieRow
+												{film}
+												phaseColor={phaseColor(phase.phase)}
+												{dateFormatter}
+												onEnlarge={() => (enlargeFilmId = film.id)}
+												{submitToggle}
+											/>
 										{/if}
 									{/each}
 								{/if}
