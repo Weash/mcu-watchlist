@@ -10,9 +10,16 @@ export interface FilmRow {
 	releaseDate: string;
 	year: number;
 	description: string;
+	posterUrl: string;
+	recap: string;
+	duration: number;
+	director: string;
+	postCreditsScenes: number;
 	/** Derived from release_date, never stored — see the schema comment. */
 	upcoming: boolean;
 	seen: boolean;
+	watchedAt: string | null;
+	rating: number | null;
 }
 
 export interface PhaseGroup {
@@ -47,7 +54,13 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 			description: films.description,
 			saga: films.saga,
 			phase: films.phase,
-			watchedAt: watches.watchedAt
+			posterUrl: films.posterUrl,
+			recap: films.recap,
+			duration: films.duration,
+			director: films.director,
+			postCreditsScenes: films.postCreditsScenes,
+			watchedAt: watches.watchedAt,
+			rating: watches.rating
 		})
 		.from(films)
 		.leftJoin(
@@ -67,8 +80,15 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 			releaseDate: row.releaseDate,
 			year: Number(row.releaseDate.slice(0, 4)),
 			description: row.description,
+			posterUrl: row.posterUrl,
+			recap: row.recap,
+			duration: row.duration,
+			director: row.director,
+			postCreditsScenes: row.postCreditsScenes,
 			upcoming: row.releaseDate > now,
-			seen: row.watchedAt !== null
+			seen: row.watchedAt !== null,
+			watchedAt: row.watchedAt,
+			rating: row.rating ?? null
 		};
 
 		let saga = sagas.at(-1);
@@ -130,6 +150,34 @@ export const actions: Actions = {
 				.delete(watches)
 				.where(and(eq(watches.userSub, locals.user.sub), eq(watches.filmId, filmId)));
 		}
+
+		return { ok: true };
+	},
+
+	/**
+	 * Sets or changes the rating on an existing watch.
+	 *
+	 * Never creates a `watches` row — only `toggle` does that — so this is
+	 * the one place a rating gets written, whether it's the post-tick dialog
+	 * or an in-row star click on an already-watched film.
+	 */
+	rate: async ({ request, locals, platform }) => {
+		const db = getDb(platform);
+		const form = await request.formData();
+		const filmId = Number(form.get('filmId'));
+		const rating = Number(form.get('rating'));
+
+		if (!Number.isInteger(filmId)) {
+			return fail(400, { message: 'Missing film' });
+		}
+		if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+			return fail(400, { message: 'Rating must be a whole number from 1 to 5.' });
+		}
+
+		await db
+			.update(watches)
+			.set({ rating })
+			.where(and(eq(watches.userSub, locals.user.sub), eq(watches.filmId, filmId)));
 
 		return { ok: true };
 	},

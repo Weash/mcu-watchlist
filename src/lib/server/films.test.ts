@@ -23,7 +23,12 @@ const VALID = {
 	releaseDate: '2027-12-17',
 	description: 'Everyone, everywhere, all at once, again.',
 	saga: 'The Multiverse Saga',
-	phase: '6'
+	phase: '6',
+	posterUrl: 'https://upload.wikimedia.org/wikipedia/en/secretwars.jpg',
+	recap: 'Doom rules a patchwork world stitched from broken realities.',
+	duration: '150',
+	director: 'The Russo Brothers',
+	postCreditsScenes: '0'
 };
 
 describe('parseFilmForm', () => {
@@ -36,7 +41,12 @@ describe('parseFilmForm', () => {
 				releaseDate: '2027-12-17',
 				description: 'Everyone, everywhere, all at once, again.',
 				saga: 'The Multiverse Saga',
-				phase: 6
+				phase: 6,
+				posterUrl: 'https://upload.wikimedia.org/wikipedia/en/secretwars.jpg',
+				recap: 'Doom rules a patchwork world stitched from broken realities.',
+				duration: 150,
+				director: 'The Russo Brothers',
+				postCreditsScenes: 0
 			}
 		});
 	});
@@ -45,7 +55,10 @@ describe('parseFilmForm', () => {
 		['title', 'Title is required.'],
 		['releaseDate', 'Release date is required.'],
 		['description', 'Description is required.'],
-		['saga', 'Saga is required.']
+		['saga', 'Saga is required.'],
+		['posterUrl', 'Poster URL is required.'],
+		['recap', 'Recap is required.'],
+		['director', 'Director is required.']
 	])('rejects a blank %s', (field, message) => {
 		expect(parseFilmForm(formOf({ ...VALID, [field]: '   ' }))).toEqual({ ok: false, message });
 	});
@@ -77,6 +90,23 @@ describe('parseFilmForm', () => {
 			value: { phase: 7 }
 		});
 	});
+
+	it.each(['0', '-1', '1.5', '', 'six'])('rejects duration %o', (duration) => {
+		expect(parseFilmForm(formOf({ ...VALID, duration }))).toMatchObject({ ok: false });
+	});
+
+	// No '' case: Number('') is 0, which is a legitimately valid value here
+	// (postCreditsScenes' floor is 0, not 1 like duration and phase).
+	it.each(['-1', '1.5', 'six'])('rejects postCreditsScenes %o', (postCreditsScenes) => {
+		expect(parseFilmForm(formOf({ ...VALID, postCreditsScenes }))).toMatchObject({ ok: false });
+	});
+
+	it('accepts zero post-credits scenes', () => {
+		expect(parseFilmForm(formOf({ ...VALID, postCreditsScenes: '0' }))).toMatchObject({
+			ok: true,
+			value: { postCreditsScenes: 0 }
+		});
+	});
 });
 
 describe('the catalogue', () => {
@@ -85,7 +115,12 @@ describe('the catalogue', () => {
 		releaseDate: '2027-12-17',
 		description: 'Everyone, everywhere, all at once, again.',
 		saga: 'The Multiverse Saga',
-		phase: 6
+		phase: 6,
+		posterUrl: 'https://upload.wikimedia.org/wikipedia/en/secretwars.jpg',
+		recap: 'Doom rules a patchwork world stitched from broken realities.',
+		duration: 150,
+		director: 'The Russo Brothers',
+		postCreditsScenes: 0
 	};
 
 	it('round-trips a new film', async () => {
@@ -134,6 +169,11 @@ describe('the catalogue', () => {
 				description: before!.description,
 				saga: before!.saga,
 				phase: before!.phase,
+				posterUrl: before!.posterUrl,
+				recap: before!.recap,
+				duration: before!.duration,
+				director: before!.director,
+				postCreditsScenes: before!.postCreditsScenes,
 				releaseDate: '2028-05-05'
 			});
 
@@ -199,7 +239,12 @@ describe('currentPhase', () => {
 				releaseDate: '2029-01-01',
 				description: 'A film in a phase that did not exist.',
 				saga: 'The Next Saga',
-				phase: 7
+				phase: 7,
+				posterUrl: 'https://upload.wikimedia.org/wikipedia/en/placeholder.jpg',
+				recap: 'A recap of a film that does not exist yet.',
+				duration: 120,
+				director: 'Someone',
+				postCreditsScenes: 0
 			});
 			expect(await currentPhase(db)).toEqual({ phase: 7, saga: 'The Next Saga' });
 		} finally {

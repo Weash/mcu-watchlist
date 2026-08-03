@@ -20,6 +20,11 @@ export interface FilmInput {
 	description: string;
 	saga: string;
 	phase: number;
+	posterUrl: string;
+	recap: string;
+	duration: number;
+	director: string;
+	postCreditsScenes: number;
 }
 
 export type ParseResult =
@@ -41,6 +46,11 @@ export function parseFilmForm(form: FormData): ParseResult {
 	const description = String(form.get('description') ?? '').trim();
 	const saga = String(form.get('saga') ?? '').trim();
 	const phase = Number(form.get('phase'));
+	const posterUrl = String(form.get('posterUrl') ?? '').trim();
+	const recap = String(form.get('recap') ?? '').trim();
+	const duration = Number(form.get('duration'));
+	const director = String(form.get('director') ?? '').trim();
+	const postCreditsScenes = Number(form.get('postCreditsScenes'));
 
 	if (!title) return { ok: false, message: 'Title is required.' };
 	if (!releaseDate) return { ok: false, message: 'Release date is required.' };
@@ -63,7 +73,36 @@ export function parseFilmForm(form: FormData): ParseResult {
 		return { ok: false, message: 'Phase must be a whole number of 1 or more.' };
 	}
 
-	return { ok: true, value: { title, releaseDate, description, saga, phase } };
+	if (!posterUrl) return { ok: false, message: 'Poster URL is required.' };
+	if (!recap) return { ok: false, message: 'Recap is required.' };
+	if (!director) return { ok: false, message: 'Director is required.' };
+
+	if (!Number.isInteger(duration) || duration < 1) {
+		return { ok: false, message: 'Duration must be a whole number of minutes, 1 or more.' };
+	}
+
+	if (!Number.isInteger(postCreditsScenes) || postCreditsScenes < 0) {
+		return {
+			ok: false,
+			message: 'Post-credits scenes must be a whole number of 0 or more.'
+		};
+	}
+
+	return {
+		ok: true,
+		value: {
+			title,
+			releaseDate,
+			description,
+			saga,
+			phase,
+			posterUrl,
+			recap,
+			duration,
+			director,
+			postCreditsScenes
+		}
+	};
 }
 
 /** The catalogue in release order — the same order the watchlist renders. */

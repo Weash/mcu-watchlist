@@ -51,6 +51,23 @@ export const films = sqliteTable(
 		/** 1..N. Colours for 1-6 are design tokens in app.css, not stored. */
 		phase: integer('phase').notNull(),
 
+		/** Wikipedia image link, pasted by hand. No upload/R2. */
+		posterUrl: text('poster_url').notNull(),
+
+		/**
+		 * Spoiler-heavy plot recap, separate from `description`. Only rendered
+		 * to a viewer once they've ticked the film seen.
+		 */
+		recap: text('recap').notNull(),
+
+		/** Runtime in minutes. */
+		duration: integer('duration').notNull(),
+
+		director: text('director').notNull(),
+
+		/** Gated behind "seen" the same as `recap` — shown even when 0. */
+		postCreditsScenes: integer('post_credits_scenes').notNull(),
+
 		/** When you last edited this row. */
 		updatedAt: text('updated_at')
 			.notNull()
@@ -74,7 +91,10 @@ export const watches = sqliteTable(
 			.references(() => films.id, { onDelete: 'cascade' }),
 		watchedAt: text('watched_at')
 			.notNull()
-			.$defaultFn(() => new Date().toISOString())
+			.$defaultFn(() => new Date().toISOString()),
+
+		/** 1-5, or null if the viewer skipped rating at tick-time. */
+		rating: integer('rating')
 	},
 	(t) => [
 		primaryKey({ columns: [t.userSub, t.filmId] }),

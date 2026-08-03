@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import Stars from '$lib/Stars.svelte';
+	import RatingDialog from '$lib/RatingDialog.svelte';
 	import type { FilmRow } from './+page.server';
 
 	let { data } = $props();
@@ -16,6 +18,15 @@
 	let overrides = $state<Record<number, boolean>>({});
 	let saveError = $state(false);
 	let hideSeen = $state(false);
+
+	/**
+	 * Absent = expanded, matching `hideSeen` — no persistence, resets on
+	 * reload.
+	 */
+	let collapsedPhases = $state<Record<number, boolean>>({});
+
+	/** The film the rating dialog is open for, or null when it's closed. */
+	let ratingFilmId = $state<number | null>(null);
 
 	const isSeen = (f: FilmRow) => overrides[f.id] ?? f.seen;
 
@@ -62,6 +73,11 @@
 	/** Every phase in order — the dot map ignores saga grouping. */
 	const allPhases = $derived(view.sagas.flatMap((s) => s.phases));
 
+	/** Looked up once per render for the rating dialog's title. */
+	const filmById = $derived(
+		new Map(allPhases.flatMap((p) => p.films).map((f) => [f.id, f]))
+	);
+
 	const submitToggle: SubmitFunction = ({ formData }) => {
 		const id = Number(formData.get('filmId'));
 		const next = formData.get('next') === 'true';
@@ -77,6 +93,9 @@
 			}
 			await update({ reset: false });
 			delete overrides[id];
+			// Only a fresh tick opens the dialog — unticking deletes the watch
+			// (and any rating) via `toggle`, so a re-tick always starts blank.
+			if (next) ratingFilmId = id;
 		};
 	};
 
@@ -221,7 +240,14 @@
 					{#each saga.phases as phase (phase.phase)}
 						{#if phase.visible.length > 0}
 							<div class="mt-6">
-								<div class="flex items-baseline gap-2.5" style:color={phaseColor(phase.phase)}>
+								<button
+									type="button"
+									onclick={() =>
+										(collapsedPhases[phase.phase] = !collapsedPhases[phase.phase])}
+									aria-expanded={!collapsedPhases[phase.phase]}
+									class="flex w-full cursor-pointer items-baseline gap-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+									style:color={phaseColor(phase.phase)}
+								>
 									<span class="font-display text-4xl leading-phasenum font-extrabold">
 										{String(phase.phase).padStart(2, '0')}
 									</span>
@@ -231,7 +257,7 @@
 									<span class="ml-auto font-mono text-xs text-muted">
 										{phase.seenCount}/{phase.releasedCount}
 									</span>
-								</div>
+								</button>
 
 								<div class="mt-2 mb-1.5 h-[3px] bg-rule">
 									<div
@@ -243,16 +269,22 @@
 									></div>
 								</div>
 
+								{#if !collapsedPhases[phase.phase]}
 									{#each phase.visible as film (film.id)}
 										{#if film.upcoming}
 											<div
 												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
 												style:color={phaseColor(phase.phase)}
 											>
+												<img
+													src={film.posterUrl}
+													alt=""
+													class="aspect-[2/3] w-12 flex-none rounded-[3px] object-cover opacity-50"
+												/>
 												<div
 													class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
 												></div>
-												<div>
+												<div class="min-w-0 flex-1">
 													<div
 														class="font-display text-xl leading-rowtitle font-bold text-muted uppercase"
 													>
@@ -260,6 +292,9 @@
 													</div>
 													<div class="mt-0.5 text-sm leading-snug text-body">
 														{film.description}
+													</div>
+													<div class="mt-1 font-mono text-2xs tracking-tag text-muted uppercase">
+														{film.duration} MIN / DIR. {film.director}
 													</div>
 													<span
 														class="mt-1 inline-block rounded-xs border border-current px-1.5 py-0.5 font-mono text-2xs tracking-tag uppercase"
@@ -271,54 +306,105 @@
 												</div>
 											</div>
 										{:else}
-											<form method="POST" action="?/toggle" use:enhance={submitToggle}>
-												<input type="hidden" name="filmId" value={film.id} />
-												<input type="hidden" name="next" value={String(!film.seen)} />
-												<button
-													type="submit"
-													aria-pressed={film.seen}
-													class="flex w-full cursor-pointer items-start gap-3 border-b border-rule py-2.5 pr-1 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-phase-3"
-													style:color={phaseColor(phase.phase)}
-												>
-													<span
-														class="mt-0.5 flex size-5 flex-none items-center justify-center rounded-[3px] border-2 border-current"
-														class:bg-current={film.seen}
-													>
-														{#if film.seen}
-															<svg
-																viewBox="0 0 14 14"
-																class="size-3 fill-none stroke-paper stroke-[3.5]"
-																aria-hidden="true"
-															>
-																<polyline points="2,7.5 5.5,11 12,3.5" />
-															</svg>
-														{/if}
-													</span>
-													<span>
-														<span
-															class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
-																? 'text-muted'
-																: 'text-ink'}"
+											<div
+												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
+												style:color={phaseColor(phase.phase)}
+											>
+												<img
+													src={film.posterUrl}
+													alt=""
+													class="aspect-[2/3] w-12 flex-none rounded-[3px] object-cover"
+													class:opacity-55={film.seen}
+												/>
+
+												<div class="min-w-0 flex-1">
+													<form method="POST" action="?/toggle" use:enhance={submitToggle}>
+														<input type="hidden" name="filmId" value={film.id} />
+														<input type="hidden" name="next" value={String(!film.seen)} />
+														<button
+															type="submit"
+															aria-pressed={film.seen}
+															class="flex w-full cursor-pointer items-start gap-3 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-phase-3"
 														>
-															{film.title}<span
-																class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
+															<span
+																class="mt-0.5 flex size-5 flex-none items-center justify-center rounded-[3px] border-2 border-current"
+																class:bg-current={film.seen}
 															>
-																{film.year}
+																{#if film.seen}
+																	<svg
+																		viewBox="0 0 14 14"
+																		class="size-3 fill-none stroke-paper stroke-[3.5]"
+																		aria-hidden="true"
+																	>
+																		<polyline points="2,7.5 5.5,11 12,3.5" />
+																	</svg>
+																{/if}
 															</span>
-														</span>
-														<span
-															class="mt-0.5 block text-sm leading-snug text-body"
-															class:opacity-55={film.seen}
-														>
-															{film.description}
-														</span>
-													</span>
-												</button>
-											</form>
+															<span>
+																<span
+																	class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
+																		? 'text-muted'
+																		: 'text-ink'}"
+																>
+																	{film.title}<span
+																		class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
+																	>
+																		{film.year}
+																	</span>
+																</span>
+																<span
+																	class="mt-0.5 block text-sm leading-snug text-body"
+																	class:opacity-55={film.seen}
+																>
+																	{film.description}
+																</span>
+															</span>
+														</button>
+													</form>
+
+													{#if film.seen}
+														<details class="mt-1.5 ml-8">
+															<summary
+																class="inline-block cursor-pointer font-mono text-2xs tracking-button text-muted uppercase select-none hover:text-ink"
+															>
+																Show recap
+															</summary>
+															<p class="mt-1.5 max-w-prose text-sm leading-snug text-body">
+																{film.recap}
+															</p>
+														</details>
+													{/if}
+
+													<div class="mt-1.5 ml-8 font-mono text-2xs tracking-tag text-muted uppercase">
+														{film.duration} MIN / DIR. {film.director}
+														{#if film.seen}
+															· {film.postCreditsScenes === 0
+																? 'No post-credits scene'
+																: `${film.postCreditsScenes} post-credits scene${film.postCreditsScenes === 1 ? '' : 's'}`}
+														{/if}
+													</div>
+												</div>
+
+												{#if film.seen}
+													<div class="flex flex-none flex-col items-end gap-1 pt-0.5 text-right">
+														<Stars
+															filmId={film.id}
+															rating={film.rating}
+															color={phaseColor(phase.phase)}
+														/>
+														{#if film.watchedAt}
+															<span class="font-mono text-2xs text-muted">
+																{dateFormatter.format(new Date(film.watchedAt))}
+															</span>
+														{/if}
+													</div>
+												{/if}
+											</div>
 										{/if}
 									{/each}
-								</div>
-							{/if}
+								{/if}
+							</div>
+						{/if}
 						{/each}
 				</section>
 			{/if}
@@ -329,3 +415,9 @@
 		</div>
 	</div>
 </div>
+
+<RatingDialog
+	filmId={ratingFilmId}
+	filmTitle={ratingFilmId !== null ? (filmById.get(ratingFilmId)?.title ?? '') : ''}
+	onClose={() => (ratingFilmId = null)}
+/>

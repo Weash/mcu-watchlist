@@ -48,6 +48,29 @@ describe('migrations', () => {
 		}
 	});
 
+	/**
+	 * 0006 makes these five columns NOT NULL. If 0005's backfill missed a
+	 * film, this is where it shows up — a null would fail the rebuild itself,
+	 * but a wrong-but-present value would not, so this also spot-checks that
+	 * every row actually has content rather than an empty string.
+	 */
+	it('backfilled every film with its specs before requiring them', async () => {
+		const { db, close } = createTestDb();
+		try {
+			const rows = await db.select().from(films);
+			expect(rows).toHaveLength(40);
+			for (const row of rows) {
+				expect(row.posterUrl.length).toBeGreaterThan(0);
+				expect(row.recap.length).toBeGreaterThan(0);
+				expect(row.director.length).toBeGreaterThan(0);
+				expect(row.duration).toBeGreaterThan(0);
+				expect(row.postCreditsScenes).toBeGreaterThanOrEqual(0);
+			}
+		} finally {
+			close();
+		}
+	});
+
 	it('reassigns ids as 1..40 in release order', async () => {
 		const { db, close } = createTestDb();
 		try {
@@ -83,6 +106,32 @@ describe('migrations', () => {
 					 VALUES ('X', '2030-01-01', 'S', 6, '2026-01-01T00:00:00.000Z')`
 				)
 			).toThrow(/NOT NULL/i);
+		} finally {
+			close();
+		}
+	});
+
+	/** 0006 makes these five columns as required as `description` already was. */
+	it('requires the five film-spec columns 0006 added to NOT NULL', () => {
+		const { raw, close } = createTestDb();
+		try {
+			expect(() =>
+				raw.exec(
+					`INSERT INTO films (title, release_date, description, saga, phase, updated_at)
+					 VALUES ('X', '2030-01-01', 'D', 'S', 6, '2026-01-01T00:00:00.000Z')`
+				)
+			).toThrow(/NOT NULL/i);
+		} finally {
+			close();
+		}
+	});
+
+	it('leaves a rating optional', async () => {
+		const { db, close } = createTestDb();
+		try {
+			await db.insert(watches).values({ userSub: 'u', filmId: 1 });
+			const [row] = await db.select().from(watches);
+			expect(row.rating).toBeNull();
 		} finally {
 			close();
 		}

@@ -90,6 +90,69 @@
 			>
 		</label>
 
+		<label class="mt-4 flex flex-col gap-1">
+			<span class="font-mono text-2xs tracking-label text-muted uppercase">Poster URL</span>
+			<input
+				name="posterUrl"
+				type="url"
+				value={data.film.posterUrl}
+				required
+				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+			/>
+		</label>
+
+		<div class="mt-4 flex gap-3">
+			<label class="flex flex-1 flex-col gap-1">
+				<span class="font-mono text-2xs tracking-label text-muted uppercase">
+					Duration (min)
+				</span>
+				<input
+					name="duration"
+					type="number"
+					min="1"
+					value={data.film.duration}
+					required
+					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				/>
+			</label>
+
+			<label class="flex flex-1 flex-col gap-1">
+				<span class="font-mono text-2xs tracking-label text-muted uppercase">Director</span>
+				<input
+					name="director"
+					value={data.film.director}
+					required
+					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				/>
+			</label>
+
+			<label class="flex flex-1 flex-col gap-1">
+				<span class="font-mono text-2xs tracking-label text-muted uppercase">
+					Post-credits scenes
+				</span>
+				<input
+					name="postCreditsScenes"
+					type="number"
+					min="0"
+					value={data.film.postCreditsScenes}
+					required
+					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				/>
+			</label>
+		</div>
+
+		<label class="mt-4 flex flex-col gap-1">
+			<span class="font-mono text-2xs tracking-label text-muted uppercase">Recap</span>
+			<textarea
+				name="recap"
+				required
+				rows="4"
+				maxlength="1500"
+				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				>{data.film.recap}</textarea
+			>
+		</label>
+
 		<button
 			type="submit"
 			class="mt-5 rounded-xs border border-ink bg-ink px-3 py-2 font-mono text-xs tracking-button text-paper uppercase hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
