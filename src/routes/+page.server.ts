@@ -10,7 +10,7 @@ export interface FilmRow {
 	releaseDate: string;
 	year: number;
 	description: string;
-	posterUrl: string;
+	posterUrl: string | null;
 	recap: string;
 	duration: number;
 	director: string;

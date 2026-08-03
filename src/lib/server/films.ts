@@ -20,7 +20,8 @@ export interface FilmInput {
 	description: string;
 	saga: string;
 	phase: number;
-	posterUrl: string;
+	/** Optional — a film without one falls back to a generic placeholder. */
+	posterUrl: string | null;
 	recap: string;
 	duration: number;
 	director: string;
@@ -46,7 +47,7 @@ export function parseFilmForm(form: FormData): ParseResult {
 	const description = String(form.get('description') ?? '').trim();
 	const saga = String(form.get('saga') ?? '').trim();
 	const phase = Number(form.get('phase'));
-	const posterUrl = String(form.get('posterUrl') ?? '').trim();
+	const posterUrl = String(form.get('posterUrl') ?? '').trim() || null;
 	const recap = String(form.get('recap') ?? '').trim();
 	const duration = Number(form.get('duration'));
 	const director = String(form.get('director') ?? '').trim();
@@ -73,7 +74,6 @@ export function parseFilmForm(form: FormData): ParseResult {
 		return { ok: false, message: 'Phase must be a whole number of 1 or more.' };
 	}
 
-	if (!posterUrl) return { ok: false, message: 'Poster URL is required.' };
 	if (!recap) return { ok: false, message: 'Recap is required.' };
 	if (!director) return { ok: false, message: 'Director is required.' };
 

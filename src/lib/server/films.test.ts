@@ -56,11 +56,15 @@ describe('parseFilmForm', () => {
 		['releaseDate', 'Release date is required.'],
 		['description', 'Description is required.'],
 		['saga', 'Saga is required.'],
-		['posterUrl', 'Poster URL is required.'],
 		['recap', 'Recap is required.'],
 		['director', 'Director is required.']
 	])('rejects a blank %s', (field, message) => {
 		expect(parseFilmForm(formOf({ ...VALID, [field]: '   ' }))).toEqual({ ok: false, message });
+	});
+
+	it('accepts a blank posterUrl as null, since a poster is optional', () => {
+		const result = parseFilmForm(formOf({ ...VALID, posterUrl: '   ' }));
+		expect(result).toMatchObject({ ok: true, value: { posterUrl: null } });
 	});
 
 	it('rejects a date that is not YYYY-MM-DD', () => {

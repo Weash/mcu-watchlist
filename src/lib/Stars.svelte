@@ -55,9 +55,10 @@
 				<svg viewBox="0 0 16 16" class="size-3.5" aria-hidden="true">
 					<path
 						d="M8 1.2l1.98 4.24 4.62.6-3.4 3.24.87 4.62L8 11.6l-4.07 2.3.87-4.62-3.4-3.24 4.62-.6z"
-						class:fill-current={star <= display}
 						class="stroke-current"
-						class:opacity-35={star > display}
+						fill={star <= display ? 'currentColor' : 'none'}
+						stroke-width="1"
+						stroke-dasharray={star <= display ? undefined : '2 1.5'}
 					/>
 				</svg>
 			</button>

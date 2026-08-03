@@ -51,8 +51,12 @@ export const films = sqliteTable(
 		/** 1..N. Colours for 1-6 are design tokens in app.css, not stored. */
 		phase: integer('phase').notNull(),
 
-		/** Wikipedia image link, pasted by hand. No upload/R2. */
-		posterUrl: text('poster_url').notNull(),
+		/**
+		 * Wikipedia image link, pasted by hand. No upload/R2. Optional — a film
+		 * without one falls back to a generic placeholder in the UI rather than
+		 * being blocked on finding a real poster.
+		 */
+		posterUrl: text('poster_url'),
 
 		/**
 		 * Spoiler-heavy plot recap, separate from `description`. Only rendered

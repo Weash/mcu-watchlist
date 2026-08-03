@@ -95,8 +95,7 @@
 			<input
 				name="posterUrl"
 				type="url"
-				value={data.film.posterUrl}
-				required
+				value={data.film.posterUrl ?? ''}
 				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			/>
 		</label>

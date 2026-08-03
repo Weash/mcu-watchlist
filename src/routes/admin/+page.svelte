@@ -127,11 +127,11 @@
 			<input
 				name="posterUrl"
 				type="url"
-				required
 				class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			/>
 			<span class="font-mono text-2xs tracking-note text-muted">
-				A Wikipedia image link. No upload — paste the URL.
+				A Wikipedia image link. No upload — paste the URL. Optional: leave blank to show a
+				placeholder until you have one.
 			</span>
 		</label>
 

@@ -49,10 +49,15 @@ describe('migrations', () => {
 	});
 
 	/**
-	 * 0006 makes these five columns NOT NULL. If 0005's backfill missed a
-	 * film, this is where it shows up — a null would fail the rebuild itself,
-	 * but a wrong-but-present value would not, so this also spot-checks that
-	 * every row actually has content rather than an empty string.
+	 * 0006 makes recap/duration/director/post-credits-scenes NOT NULL. If
+	 * 0005's backfill missed a film, this is where it shows up — a null would
+	 * fail the rebuild itself, but a wrong-but-present value would not, so
+	 * this also spot-checks that every row actually has content rather than
+	 * an empty string.
+	 *
+	 * `poster_url` is excluded here: 0007 made it optional again and clears
+	 * film 40's, which held a placeholder logo rather than a real poster —
+	 * see the next test.
 	 */
 	it('backfilled every film with its specs before requiring them', async () => {
 		const { db, close } = createTestDb();
@@ -60,11 +65,32 @@ describe('migrations', () => {
 			const rows = await db.select().from(films);
 			expect(rows).toHaveLength(40);
 			for (const row of rows) {
-				expect(row.posterUrl.length).toBeGreaterThan(0);
 				expect(row.recap.length).toBeGreaterThan(0);
 				expect(row.director.length).toBeGreaterThan(0);
 				expect(row.duration).toBeGreaterThan(0);
 				expect(row.postCreditsScenes).toBeGreaterThanOrEqual(0);
+			}
+		} finally {
+			close();
+		}
+	});
+
+	/**
+	 * 0007 makes `poster_url` optional and clears film 40's, which 0005 had
+	 * set to a stand-in logo rather than a real poster. Every other film
+	 * keeps the real poster URL 0005 backfilled.
+	 */
+	it('clears the placeholder poster on film 40, leaving every other film with one', async () => {
+		const { db, close } = createTestDb();
+		try {
+			const rows = await db.select().from(films);
+			expect(rows).toHaveLength(40);
+			for (const row of rows) {
+				if (row.id === 40) {
+					expect(row.posterUrl).toBeNull();
+				} else {
+					expect(row.posterUrl?.length).toBeGreaterThan(0);
+				}
 			}
 		} finally {
 			close();

@@ -34,7 +34,7 @@
 <dialog
 	bind:this={dialogEl}
 	oncancel={blockDismiss}
-	class="rounded-xs border border-rule bg-paper p-0 text-ink backdrop:bg-ink/40"
+	class="fixed inset-0 m-auto rounded-xs border border-rule bg-paper p-0 text-ink backdrop:bg-ink/40"
 >
 	{#if filmId !== null}
 		<div class="w-80 max-w-[90vw] p-5">

@@ -3,6 +3,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Stars from '$lib/Stars.svelte';
 	import RatingDialog from '$lib/RatingDialog.svelte';
+	import PosterDialog from '$lib/PosterDialog.svelte';
 	import type { FilmRow } from './+page.server';
 
 	let { data } = $props();
@@ -27,6 +28,13 @@
 
 	/** The film the rating dialog is open for, or null when it's closed. */
 	let ratingFilmId = $state<number | null>(null);
+
+	/**
+	 * The film whose poster is enlarged, or null when the dialog is closed.
+	 * Only ever set for a film with a real `posterUrl` — the generic fallback
+	 * poster isn't clickable.
+	 */
+	let enlargeFilmId = $state<number | null>(null);
 
 	const isSeen = (f: FilmRow) => overrides[f.id] ?? f.seen;
 
@@ -271,19 +279,40 @@
 
 								{#if !collapsedPhases[phase.phase]}
 									{#each phase.visible as film (film.id)}
+										{#snippet poster(opacityClass: string)}
+											{#if film.posterUrl}
+												<button
+													type="button"
+													onclick={() => (enlargeFilmId = film.id)}
+													aria-label="View poster for {film.title}"
+													class="flex-none cursor-pointer rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+												>
+													<img
+														src={film.posterUrl}
+														alt=""
+														class="aspect-[2/3] w-12 rounded-[3px] object-cover {opacityClass}"
+													/>
+												</button>
+											{:else}
+												<img
+													src="/poster-fallback.svg"
+													alt=""
+													class="aspect-[2/3] w-12 flex-none rounded-[3px] object-contain {opacityClass}"
+												/>
+											{/if}
+										{/snippet}
+
 										{#if film.upcoming}
 											<div
 												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
 												style:color={phaseColor(phase.phase)}
 											>
-												<img
-													src={film.posterUrl}
-													alt=""
-													class="aspect-[2/3] w-12 flex-none rounded-[3px] object-cover opacity-50"
-												/>
 												<div
 													class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
 												></div>
+
+												{@render poster('opacity-50')}
+
 												<div class="min-w-0 flex-1">
 													<div
 														class="font-display text-xl leading-rowtitle font-bold text-muted uppercase"
@@ -310,60 +339,56 @@
 												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
 												style:color={phaseColor(phase.phase)}
 											>
-												<img
-													src={film.posterUrl}
-													alt=""
-													class="aspect-[2/3] w-12 flex-none rounded-[3px] object-cover"
-													class:opacity-55={film.seen}
-												/>
+												<form
+													method="POST"
+													action="?/toggle"
+													use:enhance={submitToggle}
+													class="mt-0.5 flex-none"
+												>
+													<input type="hidden" name="filmId" value={film.id} />
+													<input type="hidden" name="next" value={String(!film.seen)} />
+													<button
+														type="submit"
+														aria-pressed={film.seen}
+														aria-label="Mark {film.title} as {film.seen ? 'not seen' : 'seen'}"
+														class="flex size-5 cursor-pointer items-center justify-center rounded-[3px] border-2 border-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+														class:bg-current={film.seen}
+													>
+														{#if film.seen}
+															<svg
+																viewBox="0 0 14 14"
+																class="size-3 fill-none stroke-paper stroke-[3.5]"
+																aria-hidden="true"
+															>
+																<polyline points="2,7.5 5.5,11 12,3.5" />
+															</svg>
+														{/if}
+													</button>
+												</form>
+
+												{@render poster(film.seen ? 'opacity-55' : '')}
 
 												<div class="min-w-0 flex-1">
-													<form method="POST" action="?/toggle" use:enhance={submitToggle}>
-														<input type="hidden" name="filmId" value={film.id} />
-														<input type="hidden" name="next" value={String(!film.seen)} />
-														<button
-															type="submit"
-															aria-pressed={film.seen}
-															class="flex w-full cursor-pointer items-start gap-3 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-phase-3"
+													<span
+														class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
+															? 'text-muted'
+															: 'text-ink'}"
+													>
+														{film.title}<span
+															class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
 														>
-															<span
-																class="mt-0.5 flex size-5 flex-none items-center justify-center rounded-[3px] border-2 border-current"
-																class:bg-current={film.seen}
-															>
-																{#if film.seen}
-																	<svg
-																		viewBox="0 0 14 14"
-																		class="size-3 fill-none stroke-paper stroke-[3.5]"
-																		aria-hidden="true"
-																	>
-																		<polyline points="2,7.5 5.5,11 12,3.5" />
-																	</svg>
-																{/if}
-															</span>
-															<span>
-																<span
-																	class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
-																		? 'text-muted'
-																		: 'text-ink'}"
-																>
-																	{film.title}<span
-																		class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
-																	>
-																		{film.year}
-																	</span>
-																</span>
-																<span
-																	class="mt-0.5 block text-sm leading-snug text-body"
-																	class:opacity-55={film.seen}
-																>
-																	{film.description}
-																</span>
-															</span>
-														</button>
-													</form>
+															{film.year}
+														</span>
+													</span>
+													<span
+														class="mt-0.5 block text-sm leading-snug text-body"
+														class:opacity-55={film.seen}
+													>
+														{film.description}
+													</span>
 
 													{#if film.seen}
-														<details class="mt-1.5 ml-8">
+														<details class="mt-1.5">
 															<summary
 																class="inline-block cursor-pointer font-mono text-2xs tracking-button text-muted uppercase select-none hover:text-ink"
 															>
@@ -375,7 +400,7 @@
 														</details>
 													{/if}
 
-													<div class="mt-1.5 ml-8 font-mono text-2xs tracking-tag text-muted uppercase">
+													<div class="mt-1.5 font-mono text-2xs tracking-tag text-muted uppercase">
 														{film.duration} MIN / DIR. {film.director}
 														{#if film.seen}
 															· {film.postCreditsScenes === 0
@@ -409,10 +434,6 @@
 				</section>
 			{/if}
 		{/each}
-
-		<div class="mt-7 text-center font-mono text-2xs tracking-note text-muted">
-			Your ticks are saved automatically.
-		</div>
 	</div>
 </div>
 
@@ -420,4 +441,10 @@
 	filmId={ratingFilmId}
 	filmTitle={ratingFilmId !== null ? (filmById.get(ratingFilmId)?.title ?? '') : ''}
 	onClose={() => (ratingFilmId = null)}
+/>
+
+<PosterDialog
+	posterUrl={enlargeFilmId !== null ? (filmById.get(enlargeFilmId)?.posterUrl ?? null) : null}
+	filmTitle={enlargeFilmId !== null ? (filmById.get(enlargeFilmId)?.title ?? '') : ''}
+	onClose={() => (enlargeFilmId = null)}
 />
