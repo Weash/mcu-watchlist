@@ -58,7 +58,6 @@
 						class="stroke-current"
 						fill={star <= display ? 'currentColor' : 'none'}
 						stroke-width="1"
-						stroke-dasharray={star <= display ? undefined : '2 1.5'}
 					/>
 				</svg>
 			</button>

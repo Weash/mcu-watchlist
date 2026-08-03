@@ -304,24 +304,29 @@
 
 										{#if film.upcoming}
 											<div
-												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
+												class="border-b border-rule py-2.5 pr-1"
 												style:color={phaseColor(phase.phase)}
 											>
-												<div
-													class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
-												></div>
-
-												{@render poster('opacity-50')}
-
-												<div class="min-w-0 flex-1">
+												<div class="flex items-start gap-3">
 													<div
-														class="font-display text-xl leading-rowtitle font-bold text-muted uppercase"
-													>
-														{film.title}
+														class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
+													></div>
+
+													{@render poster('opacity-50')}
+
+													<div class="min-w-0 flex-1">
+														<div
+															class="font-display text-xl leading-rowtitle font-bold text-muted uppercase"
+														>
+															{film.title}
+														</div>
 													</div>
-													<div class="mt-0.5 text-sm leading-snug text-body">
+												</div>
+
+												<div class="mt-2">
+													<p class="text-sm leading-snug text-body">
 														{film.description}
-													</div>
+													</p>
 													<div class="mt-1 font-mono text-2xs tracking-tag text-muted uppercase">
 														{film.duration} MIN / DIR. {film.director}
 													</div>
@@ -336,56 +341,76 @@
 											</div>
 										{:else}
 											<div
-												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
+												class="border-b border-rule py-2.5 pr-1"
 												style:color={phaseColor(phase.phase)}
 											>
-												<form
-													method="POST"
-													action="?/toggle"
-													use:enhance={submitToggle}
-													class="mt-0.5 flex-none"
-												>
-													<input type="hidden" name="filmId" value={film.id} />
-													<input type="hidden" name="next" value={String(!film.seen)} />
-													<button
-														type="submit"
-														aria-pressed={film.seen}
-														aria-label="Mark {film.title} as {film.seen ? 'not seen' : 'seen'}"
-														class="flex size-5 cursor-pointer items-center justify-center rounded-[3px] border-2 border-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-														class:bg-current={film.seen}
+												<div class="flex items-start gap-3">
+													<form
+														method="POST"
+														action="?/toggle"
+														use:enhance={submitToggle}
+														class="mt-0.5 flex-none"
 													>
-														{#if film.seen}
-															<svg
-																viewBox="0 0 14 14"
-																class="size-3 fill-none stroke-paper stroke-[3.5]"
-																aria-hidden="true"
-															>
-																<polyline points="2,7.5 5.5,11 12,3.5" />
-															</svg>
-														{/if}
-													</button>
-												</form>
-
-												{@render poster(film.seen ? 'opacity-55' : '')}
-
-												<div class="min-w-0 flex-1">
-													<span
-														class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
-															? 'text-muted'
-															: 'text-ink'}"
-													>
-														{film.title}<span
-															class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
+														<input type="hidden" name="filmId" value={film.id} />
+														<input type="hidden" name="next" value={String(!film.seen)} />
+														<button
+															type="submit"
+															aria-pressed={film.seen}
+															aria-label="Mark {film.title} as {film.seen ? 'not seen' : 'seen'}"
+															class="flex size-5 cursor-pointer items-center justify-center rounded-[3px] border-2 border-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+															class:bg-current={film.seen}
 														>
-															{film.year}
+															{#if film.seen}
+																<svg
+																	viewBox="0 0 14 14"
+																	class="size-3 fill-none stroke-paper stroke-[3.5]"
+																	aria-hidden="true"
+																>
+																	<polyline points="2,7.5 5.5,11 12,3.5" />
+																</svg>
+															{/if}
+														</button>
+													</form>
+
+													{@render poster(film.seen ? 'opacity-55' : '')}
+
+													<div class="min-w-0 flex-1">
+														<span
+															class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
+																? 'text-muted'
+																: 'text-ink'}"
+														>
+															{film.title}<span
+																class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
+															>
+																{film.year}
+															</span>
 														</span>
-													</span>
-													<span
-														class="mt-0.5 block text-sm leading-snug text-body"
+
+														{#if film.seen}
+															<div class="mt-1 flex flex-wrap items-center gap-2">
+																<Stars
+																	filmId={film.id}
+																	rating={film.rating}
+																	color={phaseColor(phase.phase)}
+																/>
+																{#if film.watchedAt}
+																	<span class="font-mono text-2xs text-muted">
+																		{dateFormatter.format(new Date(film.watchedAt))}
+																	</span>
+																{/if}
+															</div>
+														{/if}
+													</div>
+												</div>
+
+												<div class="mt-2">
+													<p
+														class="text-sm leading-snug text-body"
 														class:opacity-55={film.seen}
 													>
 														{film.description}
-													</span>
+													</p>
 
 													{#if film.seen}
 														<details class="mt-1.5">
@@ -409,21 +434,6 @@
 														{/if}
 													</div>
 												</div>
-
-												{#if film.seen}
-													<div class="flex flex-none flex-col items-end gap-1 pt-0.5 text-right">
-														<Stars
-															filmId={film.id}
-															rating={film.rating}
-															color={phaseColor(phase.phase)}
-														/>
-														{#if film.watchedAt}
-															<span class="font-mono text-2xs text-muted">
-																{dateFormatter.format(new Date(film.watchedAt))}
-															</span>
-														{/if}
-													</div>
-												{/if}
 											</div>
 										{/if}
 									{/each}
