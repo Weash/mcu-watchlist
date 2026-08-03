@@ -209,114 +209,119 @@
 		</header>
 
 		{#each view.sagas as saga (saga.saga)}
-			<section>
-				<h2
-					class="mt-10 border-b-2 border-ink pb-1.5 font-mono text-2xs tracking-label text-muted uppercase"
-				>
-					{saga.saga}
-				</h2>
+			{@const sagaHasVisiblePhase = saga.phases.some((phase) => phase.visible.length > 0)}
+			{#if sagaHasVisiblePhase}
+				<section>
+					<h2
+						class="mt-10 border-b-2 border-ink pb-1.5 font-mono text-2xs tracking-label text-muted uppercase"
+					>
+						{saga.saga}
+					</h2>
 
-				{#each saga.phases as phase (phase.phase)}
-					<div class="mt-6">
-						<div class="flex items-baseline gap-2.5" style:color={phaseColor(phase.phase)}>
-							<span class="font-display text-4xl leading-phasenum font-extrabold">
-								{String(phase.phase).padStart(2, '0')}
-							</span>
-							<span class="font-display text-xl font-bold tracking-phase text-ink uppercase">
-								Phase {phase.phase}
-							</span>
-							<span class="ml-auto font-mono text-xs text-muted">
-								{phase.seenCount}/{phase.releasedCount}
-							</span>
-						</div>
-
-						<div class="mt-2 mb-1.5 h-[3px] bg-rule">
-							<div
-								class="h-full transition-[width] duration-200"
-								style:width="{phase.releasedCount
-									? (phase.seenCount / phase.releasedCount) * 100
-									: 0}%"
-								style:background={phaseColor(phase.phase)}
-							></div>
-						</div>
-
-						{#if phase.visible.length === 0}
-							<div class="py-3.5 text-sm text-muted">All caught up on this phase.</div>
-						{/if}
-
-						{#each phase.visible as film (film.id)}
-							{#if film.upcoming}
-								<div
-									class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
-									style:color={phaseColor(phase.phase)}
-								>
-									<div
-										class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
-									></div>
-									<div>
-										<div class="font-display text-xl leading-rowtitle font-bold text-muted uppercase">
-											{film.title}
-										</div>
-										<div class="mt-0.5 text-sm leading-snug text-body">
-											{film.description}
-										</div>
-										<span
-											class="mt-1 inline-block rounded-xs border border-current px-1.5 py-0.5 font-mono text-2xs tracking-tag uppercase"
-										>
-											In theaters {dateFormatter.format(new Date(film.releaseDate + 'T00:00:00Z'))}
-										</span>
-									</div>
+					{#each saga.phases as phase (phase.phase)}
+						{#if phase.visible.length > 0}
+							<div class="mt-6">
+								<div class="flex items-baseline gap-2.5" style:color={phaseColor(phase.phase)}>
+									<span class="font-display text-4xl leading-phasenum font-extrabold">
+										{String(phase.phase).padStart(2, '0')}
+									</span>
+									<span class="font-display text-xl font-bold tracking-phase text-ink uppercase">
+										Phase {phase.phase}
+									</span>
+									<span class="ml-auto font-mono text-xs text-muted">
+										{phase.seenCount}/{phase.releasedCount}
+									</span>
 								</div>
-							{:else}
-								<form method="POST" action="?/toggle" use:enhance={submitToggle}>
-									<input type="hidden" name="filmId" value={film.id} />
-									<input type="hidden" name="next" value={String(!film.seen)} />
-									<button
-										type="submit"
-										aria-pressed={film.seen}
-										class="flex w-full cursor-pointer items-start gap-3 border-b border-rule py-2.5 pr-1 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-phase-3"
-										style:color={phaseColor(phase.phase)}
-									>
-										<span
-											class="mt-0.5 flex size-5 flex-none items-center justify-center rounded-[3px] border-2 border-current"
-											class:bg-current={film.seen}
-										>
-											{#if film.seen}
-												<svg
-													viewBox="0 0 14 14"
-													class="size-3 fill-none stroke-paper stroke-[3.5]"
-													aria-hidden="true"
-												>
-													<polyline points="2,7.5 5.5,11 12,3.5" />
-												</svg>
-											{/if}
-										</span>
-										<span>
-											<span
-												class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
-													? 'text-muted'
-													: 'text-ink'}"
+
+								<div class="mt-2 mb-1.5 h-[3px] bg-rule">
+									<div
+										class="h-full transition-[width] duration-200"
+										style:width="{phase.releasedCount
+											? (phase.seenCount / phase.releasedCount) * 100
+											: 0}%"
+										style:background={phaseColor(phase.phase)}
+									></div>
+								</div>
+
+									{#each phase.visible as film (film.id)}
+										{#if film.upcoming}
+											<div
+												class="flex w-full items-start gap-3 border-b border-rule py-2.5 pr-1"
+												style:color={phaseColor(phase.phase)}
 											>
-												{film.title}<span
-													class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
+												<div
+													class="mt-0.5 size-5 flex-none rounded-[3px] border-2 border-dotted border-current opacity-50"
+												></div>
+												<div>
+													<div
+														class="font-display text-xl leading-rowtitle font-bold text-muted uppercase"
+													>
+														{film.title}
+													</div>
+													<div class="mt-0.5 text-sm leading-snug text-body">
+														{film.description}
+													</div>
+													<span
+														class="mt-1 inline-block rounded-xs border border-current px-1.5 py-0.5 font-mono text-2xs tracking-tag uppercase"
+													>
+														In theaters {dateFormatter.format(
+															new Date(film.releaseDate + 'T00:00:00Z')
+														)}
+													</span>
+												</div>
+											</div>
+										{:else}
+											<form method="POST" action="?/toggle" use:enhance={submitToggle}>
+												<input type="hidden" name="filmId" value={film.id} />
+												<input type="hidden" name="next" value={String(!film.seen)} />
+												<button
+													type="submit"
+													aria-pressed={film.seen}
+													class="flex w-full cursor-pointer items-start gap-3 border-b border-rule py-2.5 pr-1 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-phase-3"
+													style:color={phaseColor(phase.phase)}
 												>
-													{film.year}
-												</span>
-											</span>
-											<span
-												class="mt-0.5 block text-sm leading-snug text-body"
-												class:opacity-55={film.seen}
-											>
-												{film.description}
-											</span>
-										</span>
-									</button>
-								</form>
+													<span
+														class="mt-0.5 flex size-5 flex-none items-center justify-center rounded-[3px] border-2 border-current"
+														class:bg-current={film.seen}
+													>
+														{#if film.seen}
+															<svg
+																viewBox="0 0 14 14"
+																class="size-3 fill-none stroke-paper stroke-[3.5]"
+																aria-hidden="true"
+															>
+																<polyline points="2,7.5 5.5,11 12,3.5" />
+															</svg>
+														{/if}
+													</span>
+													<span>
+														<span
+															class="font-display text-xl leading-rowtitle font-bold uppercase {film.seen
+																? 'text-muted'
+																: 'text-ink'}"
+														>
+															{film.title}<span
+																class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case"
+															>
+																{film.year}
+															</span>
+														</span>
+														<span
+															class="mt-0.5 block text-sm leading-snug text-body"
+															class:opacity-55={film.seen}
+														>
+															{film.description}
+														</span>
+													</span>
+												</button>
+											</form>
+										{/if}
+									{/each}
+								</div>
 							{/if}
 						{/each}
-					</div>
-				{/each}
-			</section>
+				</section>
+			{/if}
 		{/each}
 
 		<div class="mt-7 text-center font-mono text-2xs tracking-note text-muted">
