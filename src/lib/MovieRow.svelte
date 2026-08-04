@@ -1,74 +1,30 @@
 <script lang="ts">
-	// One row for a released film: poster, title, seen/unseen toggle, rating,
-	// and details. Desktop keeps the toggle, rating, and watched-date together
-	// in one cluster beside the title (there's room). Mobile detaches them:
-	// the icon-only toggle stays pinned next to the title, rating +
-	// watched-date get their own row below it — cramming all three into one
-	// line overflows on narrow widths. Duration/director sits under the
-	// title; description + recap are a full-width block at the bottom of the
-	// row, under the poster too.
+	// One condensed row: a tick control and a title button. No poster here —
+	// posters live in the "Up next" card and the detail sheet's header;
+	// cramming a third poster placement into every row is what the redesign
+	// removes. Tapping anywhere but the tick opens the detail sheet.
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { FilmRow } from '../routes/+page.server';
-	import Stars from '$lib/Stars.svelte';
 
 	interface Props {
 		film: FilmRow;
 		phaseColor: string;
-		dateFormatter: Intl.DateTimeFormat;
-		onEnlarge: () => void;
+		onOpenSheet: () => void;
 		onMarkSeen: () => void;
 		submitToggle: SubmitFunction;
 	}
 
-	let { film, phaseColor, dateFormatter, onEnlarge, onMarkSeen, submitToggle }: Props = $props();
+	let { film, phaseColor, onOpenSheet, onMarkSeen, submitToggle }: Props = $props();
 </script>
 
-{#snippet poster()}
-	{#if film.posterUrl}
-		<button
-			type="button"
-			onclick={onEnlarge}
-			aria-label="View poster for {film.title}"
-			class="flex-none cursor-pointer rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-		>
-			<img
-				src={film.posterUrl}
-				alt=""
-				class="aspect-[2/3] w-12 rounded-[3px] object-cover {film.seen ? 'opacity-55' : ''}"
-			/>
-		</button>
-	{:else}
-		<img
-			src="/poster-fallback.svg"
-			alt=""
-			class="aspect-[2/3] w-12 flex-none rounded-[3px] object-contain {film.seen
-				? 'opacity-55'
-				: ''}"
-		/>
-	{/if}
-{/snippet}
-
-{#snippet titleLine()}
-	<span
-		class="min-w-0 flex-1 font-display text-xl leading-rowtitle font-bold uppercase {film.seen
-			? 'text-muted'
-			: 'text-ink'}"
-	>
-		{film.title}<span class="ml-2 font-mono text-xs font-normal tracking-normal text-muted normal-case">
-			{film.year}
-		</span>
-	</span>
-{/snippet}
-
-<!-- Icon-only toggle — same size and shape whether it's marking seen or
-     unmarking, so it never shifts as state changes.
-
-     Marking seen opens the rating dialog immediately (no server round trip
-     yet — see onMarkSeen). Unmarking deletes the watch, so it stays an
-     ordinary form submit. -->
-{#snippet toggleButton()}
-	{#if film.seen}
+{#snippet tick()}
+	{#if film.upcoming}
+		<div
+			aria-hidden="true"
+			class="size-[26px] flex-none rounded-[2px] border-2 border-dashed border-current opacity-50"
+		></div>
+	{:else if film.seen}
 		<form method="POST" action="?/toggle" use:enhance={submitToggle} class="flex-none">
 			<input type="hidden" name="filmId" value={film.id} />
 			<input type="hidden" name="next" value="false" />
@@ -76,13 +32,9 @@
 				type="submit"
 				aria-pressed="true"
 				aria-label="Mark {film.title} as not seen"
-				class="flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-current bg-current transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="flex size-[26px] cursor-pointer items-center justify-center rounded-[2px] border-2 border-current bg-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			>
-				<svg
-					viewBox="0 0 14 14"
-					class="size-3 fill-none stroke-paper stroke-[3.5]"
-					aria-hidden="true"
-				>
+				<svg viewBox="0 0 14 14" class="size-[11px] fill-none stroke-paper stroke-[3.5]" aria-hidden="true">
 					<polyline points="2,7.5 5.5,11 12,3.5" />
 				</svg>
 			</button>
@@ -93,84 +45,42 @@
 			onclick={onMarkSeen}
 			aria-pressed="false"
 			aria-label="Mark {film.title} as seen"
-			class="flex size-7 flex-none cursor-pointer items-center justify-center rounded-full border-2 border-current transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+			class="size-[26px] flex-none cursor-pointer rounded-[2px] border-2 border-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 		></button>
 	{/if}
 {/snippet}
 
-{#snippet ratingInfo()}
-	<Stars filmId={film.id} rating={film.rating} color={phaseColor} />
-	{#if film.watchedAt}
-		<span class="font-mono text-2xs text-muted">
-			{dateFormatter.format(new Date(film.watchedAt))}
+<div
+	class="flex items-center gap-[11px] border-b border-hairline py-2.5"
+	style:color={phaseColor}
+>
+	{@render tick()}
+
+	<button
+		type="button"
+		onclick={onOpenSheet}
+		class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-none bg-none p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+	>
+		<span
+			class="min-w-0 flex-1 truncate font-display text-xl leading-rowtitle font-bold uppercase {film.seen
+				? 'text-muted'
+				: 'text-ink'}"
+		>
+			{film.title}
 		</span>
-	{/if}
-{/snippet}
-
-{#snippet detailsLine()}
-	<div class="mt-1 font-mono text-2xs tracking-tag text-muted uppercase">
-		{film.duration} MIN / DIR. {film.director}
-		{#if film.seen}
-			· {film.postCreditsScenes === 0
-				? 'No post-credits scene'
-				: `${film.postCreditsScenes} post-credits scene${film.postCreditsScenes === 1 ? '' : 's'}`}
+		<span class="flex-none font-mono text-2xs text-muted">{film.year}</span>
+		{#if film.seen && film.rating}
+			<span class="flex flex-none items-center gap-[3px] font-mono text-2xs">
+				<svg viewBox="0 0 16 16" class="size-[9px] fill-current" aria-hidden="true">
+					<path
+						d="M8 1.2l1.98 4.24 4.62.6-3.4 3.24.87 4.62L8 11.6l-4.07 2.3.87-4.62-3.4-3.24 4.62-.6z"
+					/>
+				</svg>
+				{film.rating}
+			</span>
 		{/if}
-	</div>
-{/snippet}
-
-<div class="border-b border-rule py-2.5 pr-1" style:color={phaseColor}>
-	<!-- Below sm: toggle stays beside the title; rating + watched-date get
-	     their own row so they never crowd the title into wrapping. -->
-	<div class="sm:hidden">
-		<div class="flex items-start gap-3">
-			{@render poster()}
-			<div class="min-w-0 flex-1">
-				<div class="flex items-center gap-2">
-					{@render titleLine()}
-					{@render toggleButton()}
-				</div>
-				{#if film.seen}
-					<div class="mt-1 flex flex-wrap items-center gap-2">
-						{@render ratingInfo()}
-					</div>
-				{/if}
-				{@render detailsLine()}
-			</div>
-		</div>
-	</div>
-
-	<!-- sm and up: toggle, rating, and watched-date share one cluster beside
-	     the title — there's room, so keeping them together reads as one unit. -->
-	<div class="hidden items-start gap-3 sm:flex">
-		{@render poster()}
-		<div class="min-w-0 flex-1">
-			<div class="flex items-center gap-2">
-				{@render titleLine()}
-				<div class="flex flex-none flex-nowrap items-center gap-2">
-					{#if film.seen}
-						{@render ratingInfo()}
-					{/if}
-					{@render toggleButton()}
-				</div>
-			</div>
-			{@render detailsLine()}
-		</div>
-	</div>
-
-	<div class="mt-2">
-		<p class="text-base leading-snug text-body" class:opacity-55={film.seen}>{film.description}</p>
-
-		{#if film.seen}
-			<details class="group mt-1.5">
-				<summary
-					class="inline-block cursor-pointer rounded-t-xs border border-rule px-2 py-1 font-mono text-2xs tracking-button text-muted uppercase select-none hover:text-ink group-open:rounded-b-none group-open:border-b-transparent"
-				>
-					Show recap
-				</summary>
-				<p class="-mt-px rounded-b-xs rounded-tr-xs border border-rule p-2.5 text-base leading-snug text-body">
-					{film.recap}
-				</p>
-			</details>
-		{/if}
-	</div>
+		<svg viewBox="0 0 16 16" class="size-3 flex-none fill-none stroke-muted stroke-[1.6]" aria-hidden="true">
+			<polyline points="6,3 11,8 6,13" />
+		</svg>
+	</button>
 </div>

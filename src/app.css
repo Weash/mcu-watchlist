@@ -86,6 +86,15 @@
 
 	/* The page column — 720px */
 	--container-page: 45rem;
+
+	/* One step above paper — the film detail sheet and the hamburger menu
+	   float on this rather than paper itself, so they read as a layer above
+	   the page. Light-mode values are our own extrapolation (the design was
+	   drawn dark-only); dark values below are exact from the handoff. */
+	--color-surface: #eef1f5;
+	--color-surface-hover: #e2e7ec;
+	--color-hairline: #c7ced5;
+	--color-control-border: #b6bfc8;
 }
 
 /* ---------------------------------------------------------------------------
@@ -123,6 +132,10 @@
 		--color-muted: #7d8699;
 		--color-rule: #262e47;
 		--color-body: #aab3c2;
+		--color-surface: #111729;
+		--color-surface-hover: #182036;
+		--color-hairline: #1a2136;
+		--color-control-border: #3a4468;
 	}
 }
 
@@ -132,6 +145,10 @@
 	--color-muted: #7d8699;
 	--color-rule: #262e47;
 	--color-body: #aab3c2;
+	--color-surface: #111729;
+	--color-surface-hover: #182036;
+	--color-hairline: #1a2136;
+	--color-control-border: #3a4468;
 }
 
 /* ---------------------------------------------------------------------------
