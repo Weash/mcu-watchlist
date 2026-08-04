@@ -6,7 +6,7 @@
 	import PosterDialog from '$lib/PosterDialog.svelte';
 	import ConfirmDialog from '$lib/ConfirmDialog.svelte';
 	import MovieRow from '$lib/MovieRow.svelte';
-	import ThemeToggle from '$lib/ThemeToggle.svelte';
+	import HamburgerMenu from '$lib/HamburgerMenu.svelte';
 	import type { FilmRow } from './+page.server';
 
 	let { data } = $props();
@@ -207,29 +207,12 @@
 					</div>
 				</div>
 
-				<div class="flex items-center gap-3">
-					<ThemeToggle />
-
-					{#if data.isOwner}
-						<a
-							href="/admin"
-							title="Admin"
-							aria-label="Admin"
-							class="-m-1.5 p-1.5 text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-						>
-							<svg
-								viewBox="0 0 16 16"
-								class="size-5 fill-none stroke-current stroke-[1.5]"
-								aria-hidden="true"
-							>
-								<circle cx="8" cy="8" r="2.25" />
-								<path
-									d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1M12.6 12.6l-1.1-1.1M4.5 4.5L3.4 3.4"
-								/>
-							</svg>
-						</a>
-					{/if}
-				</div>
+				<HamburgerMenu
+					isOwner={data.isOwner}
+					{hideSeen}
+					onToggleHideSeen={() => (hideSeen = !hideSeen)}
+					onReset={() => (resetConfirmOpen = true)}
+				/>
 			</div>
 
 			<h1 class="mt-1.5 font-display text-6xl leading-title font-extrabold tracking-title uppercase">
@@ -257,28 +240,13 @@
 				{view.pct}%
 			</div>
 
-			<div class="mt-4 flex items-center justify-between gap-3 border-t border-rule pt-3.5 pb-1">
-				<button
-					type="button"
-					onclick={() => (hideSeen = !hideSeen)}
-					aria-pressed={hideSeen}
-					class="rounded-xs border px-3 py-2 font-mono text-xs tracking-button uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3 {hideSeen
-						? 'border-ink bg-ink text-paper'
-						: 'border-rule text-muted hover:border-ink hover:text-ink'}"
-				>
-					{hideSeen ? 'Showing unseen only' : "Hide what I've seen"}
-				</button>
-
-				<form method="POST" action="?/reset" use:enhance={submitReset} bind:this={resetFormEl}>
-					<button
-						type="button"
-						onclick={() => (resetConfirmOpen = true)}
-						class="rounded-xs border border-rule px-3 py-2 font-mono text-xs tracking-button text-muted uppercase transition-colors hover:border-ink hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					>
-						Reset
-					</button>
-				</form>
-			</div>
+			<form
+				method="POST"
+				action="?/reset"
+				use:enhance={submitReset}
+				bind:this={resetFormEl}
+				class="hidden"
+			></form>
 
 			{#if saveError}
 				<div class="mt-3 font-mono text-xs text-phase-1" role="alert">

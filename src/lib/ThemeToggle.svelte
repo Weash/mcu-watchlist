@@ -1,28 +1,20 @@
 <script lang="ts">
+	import { isDarkMode, setDarkMode } from './theme';
+
 	/**
 	 * Follows system preference until the first click, which pins an explicit
-	 * choice to `<html class="dark|light">` and localStorage — from then on
-	 * localStorage leads, overriding the system preference. See app.html for
-	 * the blocking script that applies the stored class before first paint,
-	 * and app.css for the dark palette itself.
+	 * choice — from then on localStorage leads, overriding the system
+	 * preference.
 	 */
 	let isDark = $state(false);
 
 	$effect(() => {
-		const root = document.documentElement;
-		isDark = root.classList.contains('dark')
-			? true
-			: root.classList.contains('light')
-				? false
-				: window.matchMedia('(prefers-color-scheme: dark)').matches;
+		isDark = isDarkMode();
 	});
 
 	function toggle() {
 		const next = !isDark;
-		const root = document.documentElement;
-		root.classList.remove('dark', 'light');
-		root.classList.add(next ? 'dark' : 'light');
-		localStorage.setItem('theme', next ? 'dark' : 'light');
+		setDarkMode(next);
 		isDark = next;
 	}
 </script>
