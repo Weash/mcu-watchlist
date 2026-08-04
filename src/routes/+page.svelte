@@ -180,8 +180,8 @@
 </svelte:head>
 
 <div class="pb-16">
-	<div class="mx-auto max-w-page px-5">
-		<header class="pt-8 pb-4">
+	<div class="sticky top-0 z-10 border-b border-rule bg-paper">
+		<div class="mx-auto max-w-page px-5 pt-4 pb-2.5">
 			<div class="flex items-center justify-between gap-3">
 				<div class="flex items-center gap-2.5">
 					<svg viewBox="0 0 512 512" class="size-8 flex-none rounded-[9px]" aria-hidden="true">
@@ -215,11 +215,7 @@
 				/>
 			</div>
 
-			<h1 class="mt-1.5 font-display text-6xl leading-title font-extrabold tracking-title uppercase">
-				What have<br />you seen?
-			</h1>
-
-			<div class="mt-3.5 mb-1 flex flex-wrap gap-1" aria-hidden="true">
+			<div class="mt-3 flex flex-wrap gap-1" aria-hidden="true">
 				{#each allPhases as phase (phase.phase)}
 					<div class="mr-2 flex gap-[3px]" style:color={phaseColor(phase.phase)}>
 						{#each phase.films as film (film.id)}
@@ -233,6 +229,14 @@
 					</div>
 				{/each}
 			</div>
+		</div>
+	</div>
+
+	<div class="mx-auto max-w-page px-5">
+		<header class="pt-4 pb-4">
+			<h1 class="font-display text-6xl leading-title font-extrabold tracking-title uppercase">
+				What have<br />you seen?
+			</h1>
 
 			<div class="mt-3 font-mono text-xs text-muted">
 				<b class="font-semibold text-ink">{view.seenTotal}</b> of
