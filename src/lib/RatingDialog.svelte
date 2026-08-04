@@ -42,14 +42,14 @@
 				How was<br />{filmTitle}?
 			</p>
 
-			<div class="mt-4">
-				<Stars {filmId} rating={null} onSaved={close} />
+			<div class="mt-4 flex justify-center">
+				<Stars {filmId} rating={null} size="size-7" onSaved={close} />
 			</div>
 
 			<button
 				type="button"
 				onclick={close}
-				class="mt-5 rounded-xs border border-rule px-3 py-2 font-mono text-xs tracking-button text-muted uppercase transition-colors hover:border-ink hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				class="mt-5 block rounded-xs border border-rule px-3 py-2 font-mono text-xs tracking-button text-muted uppercase transition-colors hover:border-ink hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3 mx-auto"
 			>
 				I'm not sure yet
 			</button>

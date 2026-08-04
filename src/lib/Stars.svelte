@@ -16,10 +16,11 @@
 		filmId: number;
 		rating: number | null;
 		color?: string | null;
+		size?: string;
 		onSaved?: (rating: number) => void;
 	}
 
-	let { filmId, rating, color = null, onSaved }: Props = $props();
+	let { filmId, rating, color = null, size = 'size-3.5', onSaved }: Props = $props();
 
 	/** Optimistic value while a click is in flight; falls back to the prop. */
 	let pending = $state<number | null>(null);
@@ -52,7 +53,7 @@
 				aria-label="Rate {star} star{star === 1 ? '' : 's'}"
 				class="cursor-pointer rounded-xs p-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 			>
-				<svg viewBox="0 0 16 16" class="size-3.5" aria-hidden="true">
+				<svg viewBox="0 0 16 16" class={size} aria-hidden="true">
 					<path
 						d="M8 1.2l1.98 4.24 4.62.6-3.4 3.24.87 4.62L8 11.6l-4.07 2.3.87-4.62-3.4-3.24 4.62-.6z"
 						class="stroke-current"
