@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import PhaseField from '$lib/PhaseField.svelte';
+	import ThemeToggle from '$lib/ThemeToggle.svelte';
 
 	let { data, form } = $props();
 
@@ -20,9 +21,12 @@
 		<h1 class="font-display text-4xl font-extrabold tracking-title uppercase">
 			{data.film.title}
 		</h1>
-		<a href="/admin" class="font-mono text-xs tracking-button text-muted uppercase hover:text-ink">
-			← Admin
-		</a>
+		<div class="flex items-center gap-3">
+			<ThemeToggle />
+			<a href="/admin" class="font-mono text-xs tracking-button text-muted uppercase hover:text-ink">
+				← Admin
+			</a>
+		</div>
 	</div>
 
 	{#if form?.message}

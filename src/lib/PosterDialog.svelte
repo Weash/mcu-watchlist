@@ -36,7 +36,7 @@
 	bind:this={dialogEl}
 	onclose={onClose}
 	onclick={onBackdropClick}
-	class="fixed inset-0 m-auto rounded-lg border-0 bg-transparent p-0 backdrop:bg-ink/40"
+	class="fixed inset-0 m-auto rounded-lg border-0 bg-transparent p-0 backdrop:bg-black/40"
 >
 	{#if posterUrl !== null}
 		<img

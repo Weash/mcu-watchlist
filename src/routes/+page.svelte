@@ -5,6 +5,7 @@
 	import RatingDialog from '$lib/RatingDialog.svelte';
 	import PosterDialog from '$lib/PosterDialog.svelte';
 	import MovieRow from '$lib/MovieRow.svelte';
+	import ThemeToggle from '$lib/ThemeToggle.svelte';
 	import type { FilmRow } from './+page.server';
 
 	let { data } = $props();
@@ -161,25 +162,29 @@
 					</div>
 				</div>
 
-				{#if data.isOwner}
-					<a
-						href="/admin"
-						title="Admin"
-						aria-label="Admin"
-						class="-m-1.5 p-1.5 text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					>
-						<svg
-							viewBox="0 0 16 16"
-							class="size-5 fill-none stroke-current stroke-[1.5]"
-							aria-hidden="true"
+				<div class="flex items-center gap-3">
+					<ThemeToggle />
+
+					{#if data.isOwner}
+						<a
+							href="/admin"
+							title="Admin"
+							aria-label="Admin"
+							class="-m-1.5 p-1.5 text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 						>
-							<circle cx="8" cy="8" r="2.25" />
-							<path
-								d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1M12.6 12.6l-1.1-1.1M4.5 4.5L3.4 3.4"
-							/>
-						</svg>
-					</a>
-				{/if}
+							<svg
+								viewBox="0 0 16 16"
+								class="size-5 fill-none stroke-current stroke-[1.5]"
+								aria-hidden="true"
+							>
+								<circle cx="8" cy="8" r="2.25" />
+								<path
+									d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1M12.6 12.6l-1.1-1.1M4.5 4.5L3.4 3.4"
+								/>
+							</svg>
+						</a>
+					{/if}
+				</div>
 			</div>
 
 			<h1 class="mt-1.5 font-display text-6xl leading-title font-extrabold tracking-title uppercase">
@@ -342,7 +347,7 @@
 												</div>
 
 												<div class="mt-2">
-													<p class="text-sm leading-snug text-body">{film.description}</p>
+													<p class="text-base leading-snug text-body">{film.description}</p>
 												</div>
 											</div>
 										{:else}

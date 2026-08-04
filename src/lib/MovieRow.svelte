@@ -146,16 +146,16 @@
 	</div>
 
 	<div class="mt-2">
-		<p class="text-sm leading-snug text-body" class:opacity-55={film.seen}>{film.description}</p>
+		<p class="text-base leading-snug text-body" class:opacity-55={film.seen}>{film.description}</p>
 
 		{#if film.seen}
-			<details class="group mt-1.5 max-w-prose">
+			<details class="group mt-1.5">
 				<summary
 					class="inline-block cursor-pointer rounded-t-xs border border-rule px-2 py-1 font-mono text-2xs tracking-button text-muted uppercase select-none hover:text-ink group-open:rounded-b-none group-open:border-b-transparent"
 				>
 					Show recap
 				</summary>
-				<p class="-mt-px rounded-b-xs rounded-tr-xs border border-rule p-2.5 text-sm leading-snug text-body">
+				<p class="-mt-px rounded-b-xs rounded-tr-xs border border-rule p-2.5 text-base leading-snug text-body">
 					{film.recap}
 				</p>
 			</details>

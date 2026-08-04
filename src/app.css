@@ -109,6 +109,32 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Dark mode — deep navy paper, light ink, same phase accents. Follows system
+   preference by default; `.dark`/`.light` on <html> (set by the toggle, see
+   ThemeToggle.svelte) overrides it and wins once localStorage has an
+   explicit choice. The blocking script in app.html applies that class before
+   first paint to avoid a flash.
+--------------------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+	:root:not(.light) {
+		--color-paper: #0b0f1c;
+		--color-ink: #e8ecf3;
+		--color-muted: #7d8699;
+		--color-rule: #262e47;
+		--color-body: #aab3c2;
+	}
+}
+
+:root.dark {
+	--color-paper: #0b0f1c;
+	--color-ink: #e8ecf3;
+	--color-muted: #7d8699;
+	--color-rule: #262e47;
+	--color-body: #aab3c2;
+}
+
+/* ---------------------------------------------------------------------------
    Base: paper background with the 5px dot grid.
 --------------------------------------------------------------------------- */
 
@@ -121,6 +147,9 @@
 		color: var(--color-ink);
 		font-family: var(--font-sans);
 		-webkit-font-smoothing: antialiased;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	/* The design relies on transitions for the dots and phase bars; honour the
