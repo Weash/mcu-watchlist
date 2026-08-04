@@ -17,10 +17,20 @@
 		rating: number | null;
 		color?: string | null;
 		size?: string;
+		action?: string;
 		onSaved?: (rating: number) => void;
+		onError?: () => void;
 	}
 
-	let { filmId, rating, color = null, size = 'size-3.5', onSaved }: Props = $props();
+	let {
+		filmId,
+		rating,
+		color = null,
+		size = 'size-3.5',
+		action = '?/rate',
+		onSaved,
+		onError
+	}: Props = $props();
 
 	/** Optimistic value while a click is in flight; falls back to the prop. */
 	let pending = $state<number | null>(null);
@@ -33,6 +43,7 @@
 			return async ({ result, update }) => {
 				if (result.type === 'failure' || result.type === 'error') {
 					pending = null;
+					onError?.();
 					return;
 				}
 				await update({ reset: false });
@@ -45,7 +56,7 @@
 
 <div class="flex gap-0.5" style:color={color}>
 	{#each [1, 2, 3, 4, 5] as star (star)}
-		<form method="POST" action="?/rate" use:enhance={submitRating(star)}>
+		<form method="POST" {action} use:enhance={submitRating(star)}>
 			<input type="hidden" name="filmId" value={filmId} />
 			<input type="hidden" name="rating" value={star} />
 			<button

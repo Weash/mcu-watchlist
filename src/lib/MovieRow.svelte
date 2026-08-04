@@ -17,10 +17,11 @@
 		phaseColor: string;
 		dateFormatter: Intl.DateTimeFormat;
 		onEnlarge: () => void;
+		onMarkSeen: () => void;
 		submitToggle: SubmitFunction;
 	}
 
-	let { film, phaseColor, dateFormatter, onEnlarge, submitToggle }: Props = $props();
+	let { film, phaseColor, dateFormatter, onEnlarge, onMarkSeen, submitToggle }: Props = $props();
 </script>
 
 {#snippet poster()}
@@ -61,19 +62,22 @@
 {/snippet}
 
 <!-- Icon-only toggle — same size and shape whether it's marking seen or
-     unmarking, so it never shifts as state changes. -->
+     unmarking, so it never shifts as state changes.
+
+     Marking seen opens the rating dialog immediately (no server round trip
+     yet — see onMarkSeen). Unmarking deletes the watch, so it stays an
+     ordinary form submit. -->
 {#snippet toggleButton()}
-	<form method="POST" action="?/toggle" use:enhance={submitToggle} class="flex-none">
-		<input type="hidden" name="filmId" value={film.id} />
-		<input type="hidden" name="next" value={String(!film.seen)} />
-		<button
-			type="submit"
-			aria-pressed={film.seen}
-			aria-label="Mark {film.title} as {film.seen ? 'not seen' : 'seen'}"
-			class="flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-current transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-			class:bg-current={film.seen}
-		>
-			{#if film.seen}
+	{#if film.seen}
+		<form method="POST" action="?/toggle" use:enhance={submitToggle} class="flex-none">
+			<input type="hidden" name="filmId" value={film.id} />
+			<input type="hidden" name="next" value="false" />
+			<button
+				type="submit"
+				aria-pressed="true"
+				aria-label="Mark {film.title} as not seen"
+				class="flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-current bg-current transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+			>
 				<svg
 					viewBox="0 0 14 14"
 					class="size-3 fill-none stroke-paper stroke-[3.5]"
@@ -81,9 +85,17 @@
 				>
 					<polyline points="2,7.5 5.5,11 12,3.5" />
 				</svg>
-			{/if}
-		</button>
-	</form>
+			</button>
+		</form>
+	{:else}
+		<button
+			type="button"
+			onclick={onMarkSeen}
+			aria-pressed="false"
+			aria-label="Mark {film.title} as seen"
+			class="flex size-7 flex-none cursor-pointer items-center justify-center rounded-full border-2 border-current transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+		></button>
+	{/if}
 {/snippet}
 
 {#snippet ratingInfo()}

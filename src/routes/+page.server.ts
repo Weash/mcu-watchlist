@@ -155,11 +155,41 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * Sets or changes the rating on an existing watch.
-	 *
-	 * Never creates a `watches` row — only `toggle` does that — so this is
-	 * the one place a rating gets written, whether it's the post-tick dialog
-	 * or an in-row star click on an already-watched film.
+	 * Creates the watch row for a fresh tick, with an optional rating in the
+	 * same write. The rating dialog's star click and "I'm not sure yet"
+	 * button both land here — one round trip instead of a tick followed by
+	 * a separate rate call, so the dialog can open the instant the film is
+	 * ticked and only touch the database once a choice is made.
+	 */
+	confirm: async ({ request, locals, platform }) => {
+		const db = getDb(platform);
+		const form = await request.formData();
+		const filmId = Number(form.get('filmId'));
+		const ratingRaw = form.get('rating');
+		const rating = ratingRaw === null ? null : Number(ratingRaw);
+
+		if (!Number.isInteger(filmId)) {
+			return fail(400, { message: 'Missing film' });
+		}
+		if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) {
+			return fail(400, { message: 'Rating must be a whole number from 1 to 5.' });
+		}
+
+		await db
+			.insert(watches)
+			.values({ userSub: locals.user.sub, filmId, rating })
+			.onConflictDoUpdate({
+				target: [watches.userSub, watches.filmId],
+				set: { rating }
+			});
+
+		return { ok: true };
+	},
+
+	/**
+	 * Changes the rating on an existing watch — the in-row star click on an
+	 * already-watched film. `confirm` is the only place a fresh watch row
+	 * gets created.
 	 */
 	rate: async ({ request, locals, platform }) => {
 		const db = getDb(platform);

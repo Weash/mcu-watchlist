@@ -4,6 +4,7 @@
 	import Stars from '$lib/Stars.svelte';
 	import RatingDialog from '$lib/RatingDialog.svelte';
 	import PosterDialog from '$lib/PosterDialog.svelte';
+	import ConfirmDialog from '$lib/ConfirmDialog.svelte';
 	import MovieRow from '$lib/MovieRow.svelte';
 	import ThemeToggle from '$lib/ThemeToggle.svelte';
 	import type { FilmRow } from './+page.server';
@@ -30,6 +31,14 @@
 
 	/** The film the rating dialog is open for, or null when it's closed. */
 	let ratingFilmId = $state<number | null>(null);
+
+	let resetFormEl = $state<HTMLFormElement>();
+	let resetConfirmOpen = $state(false);
+
+	function confirmReset() {
+		resetConfirmOpen = false;
+		resetFormEl?.requestSubmit();
+	}
 
 	/**
 	 * The film whose poster is enlarged, or null when the dialog is closed.
@@ -88,11 +97,14 @@
 		new Map(allPhases.flatMap((p) => p.films).map((f) => [f.id, f]))
 	);
 
+	// Unticking only — deletes the watch (and any rating) via `toggle`, so a
+	// re-tick always starts blank. Ticking goes through markSeen/confirmed
+	// below instead, so the dialog opens instantly rather than after a round
+	// trip.
 	const submitToggle: SubmitFunction = ({ formData }) => {
 		const id = Number(formData.get('filmId'));
-		const next = formData.get('next') === 'true';
 
-		overrides[id] = next;
+		overrides[id] = false;
 		saveError = false;
 
 		return async ({ result, update }) => {
@@ -103,9 +115,42 @@
 			}
 			await update({ reset: false });
 			delete overrides[id];
-			// Only a fresh tick opens the dialog — unticking deletes the watch
-			// (and any rating) via `toggle`, so a re-tick always starts blank.
-			if (next) ratingFilmId = id;
+		};
+	};
+
+	/**
+	 * Opens the rating dialog the instant a film is ticked, before the tick
+	 * has reached the database — the actual write happens once the dialog
+	 * resolves (star click or skip), via the `?/confirm` action.
+	 */
+	function markSeen(filmId: number) {
+		overrides[filmId] = true;
+		saveError = false;
+		ratingFilmId = filmId;
+	}
+
+	function clearRatingFilm() {
+		if (ratingFilmId !== null) delete overrides[ratingFilmId];
+		ratingFilmId = null;
+	}
+
+	function onRated() {
+		clearRatingFilm();
+	}
+
+	function onRatingError() {
+		clearRatingFilm();
+		saveError = true;
+	}
+
+	const onSkipRating: SubmitFunction = () => {
+		return async ({ result, update }) => {
+			if (result.type === 'failure' || result.type === 'error') {
+				onRatingError();
+				return;
+			}
+			await update({ reset: false });
+			clearRatingFilm();
 		};
 	};
 
@@ -224,9 +269,10 @@
 					{hideSeen ? 'Showing unseen only' : "Hide what I've seen"}
 				</button>
 
-				<form method="POST" action="?/reset" use:enhance={submitReset}>
+				<form method="POST" action="?/reset" use:enhance={submitReset} bind:this={resetFormEl}>
 					<button
-						type="submit"
+						type="button"
+						onclick={() => (resetConfirmOpen = true)}
 						class="rounded-xs border border-rule px-3 py-2 font-mono text-xs tracking-button text-muted uppercase transition-colors hover:border-ink hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 					>
 						Reset
@@ -356,6 +402,7 @@
 												phaseColor={phaseColor(phase.phase)}
 												{dateFormatter}
 												onEnlarge={() => (enlargeFilmId = film.id)}
+												onMarkSeen={() => markSeen(film.id)}
 												{submitToggle}
 											/>
 										{/if}
@@ -373,11 +420,22 @@
 <RatingDialog
 	filmId={ratingFilmId}
 	filmTitle={ratingFilmId !== null ? (filmById.get(ratingFilmId)?.title ?? '') : ''}
-	onClose={() => (ratingFilmId = null)}
+	{onRated}
+	onSkip={onSkipRating}
+	onError={onRatingError}
 />
 
 <PosterDialog
 	posterUrl={enlargeFilmId !== null ? (filmById.get(enlargeFilmId)?.posterUrl ?? null) : null}
 	filmTitle={enlargeFilmId !== null ? (filmById.get(enlargeFilmId)?.title ?? '') : ''}
 	onClose={() => (enlargeFilmId = null)}
+/>
+
+<ConfirmDialog
+	open={resetConfirmOpen}
+	title="Reset everything?"
+	message="This deletes every tick and rating you've saved, for every film — there's no undo."
+	confirmLabel="Reset"
+	onConfirm={confirmReset}
+	onCancel={() => (resetConfirmOpen = false)}
 />
