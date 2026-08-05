@@ -167,6 +167,14 @@
 		transition:
 			background-color 0.15s ease,
 			color 0.15s ease;
+
+		/* Reserve the scrollbar gutter permanently, on every page (this is the
+		   document root, so it applies to admin too). Without this, locking
+		   scroll for FilmSheet — or any future dialog — removes the page's
+		   own scrollbar, and the content jumps sideways by its width for as
+		   long as the dialog is open. A stable gutter never appears or
+		   disappears, so nothing shifts. */
+		scrollbar-gutter: stable;
 	}
 
 	/* The design relies on transitions for the dots and phase bars; honour the
