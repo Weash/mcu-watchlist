@@ -31,18 +31,49 @@
 
 	// showModal() alone doesn't reliably stop the page underneath from
 	// scrolling on mobile Safari, so the body is explicitly locked for as
-	// long as the sheet is open.
+	// long as the sheet is open. Plain `overflow: hidden` isn't enough on
+	// iOS — it doesn't actually block touch scrolling, and toggling it while
+	// the page is mid-scroll shifts every `position: fixed` element (this
+	// sheet included) by roughly the scroll offset, which is what sent the
+	// sheet almost entirely off-screen on iPhone. Pinning the body to its
+	// current scroll position with `position: fixed; top: -scrollY` and
+	// restoring both on close is the standard workaround.
+	let lockedScrollY = 0;
+	let scrollLocked = false;
+
+	// Guarded by `scrollLocked` because the effect below returns `unlockScroll`
+	// as its cleanup, which Svelte runs before every re-run — not just on
+	// unmount. Without the guard, opening the sheet would fire an unlock
+	// (and an unwanted scrollTo) left over from the previous close.
+	function lockScroll() {
+		if (scrollLocked) return;
+		scrollLocked = true;
+		lockedScrollY = window.scrollY;
+		document.body.style.position = 'fixed';
+		document.body.style.top = `-${lockedScrollY}px`;
+		document.body.style.left = '0';
+		document.body.style.right = '0';
+	}
+
+	function unlockScroll() {
+		if (!scrollLocked) return;
+		scrollLocked = false;
+		document.body.style.position = '';
+		document.body.style.top = '';
+		document.body.style.left = '';
+		document.body.style.right = '';
+		window.scrollTo(0, lockedScrollY);
+	}
+
 	$effect(() => {
 		if (film !== null) {
+			lockScroll();
 			dialogEl?.showModal();
-			document.body.style.overflow = 'hidden';
 		} else {
 			dialogEl?.close();
-			document.body.style.overflow = '';
+			unlockScroll();
 		}
-		return () => {
-			document.body.style.overflow = '';
-		};
+		return unlockScroll;
 	});
 
 	/** Dismiss on a click that lands on the dialog's own backdrop area. */
