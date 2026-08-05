@@ -55,38 +55,35 @@
 	}
 
 	/**
-	 * Swipe-to-dismiss. A drag only starts when the sheet is already
-	 * scrolled to the top — otherwise the gesture is an ordinary scroll of
-	 * the recap text — and only tracks once the finger has actually moved
-	 * downward, so it never steals a tap.
+	 * Swipe-to-dismiss, via a dedicated handle rather than the sheet body.
+	 *
+	 * The handle sits outside the sheet's own scrollable area (see the
+	 * markup) and carries a permanent `touch-none`. That matters: a
+	 * browser decides whether a touch becomes a native scroll/pan at
+	 * `touchstart`, based on the *static* touch-action of the element it
+	 * lands on — flipping touch-action from JS in `pointermove` is too
+	 * late once the sheet itself is the thing being touched, which is why
+	 * dragging used to get swallowed as a scroll instead of reaching here.
 	 */
 	let dragOffset = $state(0);
 	let dragging = $state(false);
 	let dragStartY = 0;
 
-	function onPointerDown(e: PointerEvent) {
-		if (e.pointerType === 'mouse' || !dialogEl || dialogEl.scrollTop > 0) return;
+	function onHandlePointerDown(e: PointerEvent) {
 		dragging = true;
 		dragStartY = e.clientY;
+		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 	}
 
-	function onPointerMove(e: PointerEvent) {
-		if (!dragging || !dialogEl) return;
+	function onHandlePointerMove(e: PointerEvent) {
+		if (!dragging) return;
 		const delta = e.clientY - dragStartY;
-		if (delta <= 0) {
-			dragOffset = 0;
-			return;
-		}
-		// Once a downward drag is confirmed, stop the sheet's own scroll
-		// from fighting the gesture.
-		dialogEl.style.touchAction = 'none';
-		dragOffset = delta;
+		dragOffset = Math.max(0, delta);
 	}
 
 	function endDrag() {
 		if (!dragging) return;
 		dragging = false;
-		if (dialogEl) dialogEl.style.touchAction = '';
 		if (dragOffset > 100) {
 			dialogEl?.close();
 		}
@@ -98,19 +95,25 @@
 	bind:this={dialogEl}
 	onclose={onClose}
 	onclick={onBackdropClick}
-	onpointerdown={onPointerDown}
-	onpointermove={onPointerMove}
-	onpointerup={endDrag}
-	onpointercancel={endDrag}
-	class="fixed inset-x-0 top-auto bottom-0 mx-auto mt-0 mb-0 max-h-[86vh] w-full max-w-[520px] overflow-y-auto rounded-t-2xl border-0 bg-surface p-0 text-ink backdrop:bg-[rgba(4,7,15,0.66)]"
+	class="fixed inset-x-0 top-auto bottom-0 mx-auto mt-0 mb-0 flex max-h-[86vh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-2xl border-0 bg-surface p-0 text-ink backdrop:bg-[rgba(4,7,15,0.66)]"
 	style:transform={dragOffset ? `translateY(${dragOffset}px)` : ''}
 	class:transition-transform={!dragging}
 	style:transition-duration={dragging ? '0ms' : '150ms'}
 >
 	{#if film}
-		<div class="border-t-[3px] px-5 pt-2.5 pb-5" style:border-color={film.phaseColor}>
-			<div class="mx-auto mb-3.5 h-1 w-[38px] rounded-full bg-control-border"></div>
+		<div
+			role="presentation"
+			class="flex-none touch-none border-t-[3px] px-5 pt-2.5 pb-3.5"
+			style:border-color={film.phaseColor}
+			onpointerdown={onHandlePointerDown}
+			onpointermove={onHandlePointerMove}
+			onpointerup={endDrag}
+			onpointercancel={endDrag}
+		>
+			<div class="mx-auto h-1 w-[38px] rounded-full bg-control-border"></div>
+		</div>
 
+		<div class="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
 			<div class="flex items-start gap-[13px]" style:color={film.phaseColor}>
 				{#if film.posterUrl}
 					<img
