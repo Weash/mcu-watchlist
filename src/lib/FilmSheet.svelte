@@ -146,25 +146,28 @@
 >
 	{#if film}
 		<!--
-			The panel's height is a definite 86% of the dialog (i.e. of the viewport)
-			rather than being grown from its content, and that is the actual iPhone
-			fix.
+			The panel grows with its content between a floor and a cap, and how it
+			does that is the iPhone fix — read before changing any of the three
+			height values or the body's `flex-auto`.
 
-			It used to be the dialog itself, sized `top: auto; bottom: 0` with
-			`max-h-[86vh]`, so its height came from its content — an auto-height
-			column flex container whose body child was `flex-1`, i.e.
+			This used to be the dialog itself, sized `top: auto; bottom: 0` with
+			`max-h-[86vh]`, so its height came purely from its content — an
+			auto-height column flex container whose body child was `flex-1`, i.e.
 			`flex-basis: 0%`. Chrome sizes such a child from its content when
 			computing the container's intrinsic height; Safari resolves the basis to
 			0, so the whole thing collapsed to just the non-flexing drag handle and
-			`overflow-hidden` clipped the rest. That is why the sheet opened as a
-			~45px strip at the bottom of an iPhone while desktop Chrome looked fine
-			at the same width.
+			`overflow-hidden` clipped the rest — the sheet opened as a ~45px strip at
+			the bottom of an iPhone while desktop Chrome looked fine at the same
+			width.
 
-			With the height definite, nothing depends on intrinsic flex sizing and
-			`flex-1` on the body below behaves the same in both engines.
+			`flex-auto` on the body (`flex-basis: auto`) is what avoids that: the
+			body's base size is its content, so the panel's intrinsic height includes
+			it in either engine. `min-h` is insurance rather than design — if an
+			engine ever does collapse the intrinsic height again, `flex-grow` fills
+			the floor and the sheet is merely short instead of unusable.
 		-->
 		<div
-			class="absolute inset-x-0 bottom-0 mx-auto flex h-[86%] w-full max-w-[520px] flex-col overflow-hidden rounded-t-2xl bg-surface"
+			class="absolute inset-x-0 bottom-0 mx-auto flex h-auto max-h-[86%] min-h-[45%] w-full max-w-[520px] flex-col overflow-hidden rounded-t-2xl bg-surface"
 			style:transform={dragOffset ? `translateY(${dragOffset}px)` : ''}
 			class:transition-transform={!dragging}
 			style:transition-duration={dragging ? '0ms' : '150ms'}
@@ -182,7 +185,7 @@
 			</div>
 
 			<div
-				class="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.25rem_+_env(safe-area-inset-bottom))]"
+				class="min-h-0 flex-auto overflow-y-auto px-5 pb-[calc(1.25rem_+_env(safe-area-inset-bottom))]"
 			>
 				<div class="flex items-start gap-[13px]" style:color={film.phaseColor}>
 					{#if film.posterUrl}
@@ -213,13 +216,13 @@
 					</div>
 				</div>
 
-				{#if film.upcoming}
-					<div
-						class="mt-3.5 flex items-center justify-center rounded-[3px] border border-rule px-[11px] py-[9px] font-mono text-2xs tracking-button text-muted uppercase"
-					>
-						Not watched yet
-					</div>
-				{:else}
+				<!--
+					Keyed on `seen`, not on `upcoming`: a rating row on a film you
+					haven't watched is five empty stars saying nothing, so unseen films
+					(upcoming or merely unwatched) get the plain status line instead.
+					Rating stays reachable — marking a film seen opens the rating dialog.
+				-->
+				{#if film.seen}
 					<div
 						class="mt-3.5 flex items-center gap-2.5 rounded-[3px] border border-rule px-[11px] py-[9px]"
 						style:color={film.phaseColor}
@@ -229,15 +232,21 @@
 							rating={film.rating}
 							color={film.phaseColor}
 							size="size-5"
-							action={film.seen ? '?/rate' : '?/confirm'}
+							action="?/rate"
 							onSaved={onRated}
 							onError={onRatingError}
 						/>
 						<span class="ml-auto font-mono text-2xs tracking-button text-muted uppercase">
-							{film.seen && film.watchedAt
+							{film.watchedAt
 								? `Watched ${dateFormatter.format(new Date(film.watchedAt))}`
-								: 'Not watched yet'}
+								: 'Watched'}
 						</span>
+					</div>
+				{:else}
+					<div
+						class="mt-3.5 flex items-center justify-center rounded-[3px] border border-rule px-[11px] py-[9px] font-mono text-2xs tracking-button text-muted uppercase"
+					>
+						Not watched yet
 					</div>
 				{/if}
 
@@ -257,10 +266,16 @@
 				<div class="mt-3.5 font-mono text-2xs tracking-label text-muted uppercase">The gist</div>
 				<p class="mt-1.5 text-[15px] leading-[1.45] text-body">{film.description}</p>
 
-				<div class="mt-3.5 font-mono text-2xs tracking-label text-muted uppercase">
-					Full recap · spoilers
-				</div>
-				<p class="mt-1.5 text-[15px] leading-[1.5] text-body">{film.recap}</p>
+				<!--
+					The gist above is written spoiler-free, so it always shows. The full
+					recap is not, so it stays behind having actually seen the film.
+				-->
+				{#if film.seen}
+					<div class="mt-3.5 font-mono text-2xs tracking-label text-muted uppercase">
+						Full recap · spoilers
+					</div>
+					<p class="mt-1.5 text-[15px] leading-[1.5] text-body">{film.recap}</p>
+				{/if}
 
 				{#if !film.upcoming}
 					{#if film.seen}
