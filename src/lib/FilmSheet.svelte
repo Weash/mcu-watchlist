@@ -29,9 +29,20 @@
 
 	let dialogEl = $state<HTMLDialogElement>();
 
+	// showModal() alone doesn't reliably stop the page underneath from
+	// scrolling on mobile Safari, so the body is explicitly locked for as
+	// long as the sheet is open.
 	$effect(() => {
-		if (film !== null) dialogEl?.showModal();
-		else dialogEl?.close();
+		if (film !== null) {
+			dialogEl?.showModal();
+			document.body.style.overflow = 'hidden';
+		} else {
+			dialogEl?.close();
+			document.body.style.overflow = '';
+		}
+		return () => {
+			document.body.style.overflow = '';
+		};
 	});
 
 	/** Dismiss on a click that lands on the dialog's own backdrop area. */
@@ -42,13 +53,59 @@
 	function pcLabel(n: number) {
 		return n === 0 ? 'None' : `${n} scene${n === 1 ? '' : 's'}`;
 	}
+
+	/**
+	 * Swipe-to-dismiss. A drag only starts when the sheet is already
+	 * scrolled to the top — otherwise the gesture is an ordinary scroll of
+	 * the recap text — and only tracks once the finger has actually moved
+	 * downward, so it never steals a tap.
+	 */
+	let dragOffset = $state(0);
+	let dragging = $state(false);
+	let dragStartY = 0;
+
+	function onPointerDown(e: PointerEvent) {
+		if (e.pointerType === 'mouse' || !dialogEl || dialogEl.scrollTop > 0) return;
+		dragging = true;
+		dragStartY = e.clientY;
+	}
+
+	function onPointerMove(e: PointerEvent) {
+		if (!dragging || !dialogEl) return;
+		const delta = e.clientY - dragStartY;
+		if (delta <= 0) {
+			dragOffset = 0;
+			return;
+		}
+		// Once a downward drag is confirmed, stop the sheet's own scroll
+		// from fighting the gesture.
+		dialogEl.style.touchAction = 'none';
+		dragOffset = delta;
+	}
+
+	function endDrag() {
+		if (!dragging) return;
+		dragging = false;
+		if (dialogEl) dialogEl.style.touchAction = '';
+		if (dragOffset > 100) {
+			dialogEl?.close();
+		}
+		dragOffset = 0;
+	}
 </script>
 
 <dialog
 	bind:this={dialogEl}
 	onclose={onClose}
 	onclick={onBackdropClick}
+	onpointerdown={onPointerDown}
+	onpointermove={onPointerMove}
+	onpointerup={endDrag}
+	onpointercancel={endDrag}
 	class="fixed inset-x-0 top-auto bottom-0 mx-auto mt-0 mb-0 max-h-[86vh] w-full max-w-[520px] overflow-y-auto rounded-t-2xl border-0 bg-surface p-0 text-ink backdrop:bg-[rgba(4,7,15,0.66)]"
+	style:transform={dragOffset ? `translateY(${dragOffset}px)` : ''}
+	class:transition-transform={!dragging}
+	style:transition-duration={dragging ? '0ms' : '150ms'}
 >
 	{#if film}
 		<div class="border-t-[3px] px-5 pt-2.5 pb-5" style:border-color={film.phaseColor}>
