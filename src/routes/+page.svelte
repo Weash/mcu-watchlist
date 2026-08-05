@@ -318,7 +318,21 @@
 
 			{#if view.nextUp}
 				{@const nextUp = view.nextUp}
-				<div class="mt-4 flex min-h-[100px] items-start gap-3 rounded-[3px] border border-ink p-3">
+				<!--
+					The card opens the detail sheet like a row does. The tap target is
+					an overlay button rather than a wrapper, so the "Mark as seen"
+					button can stay where it is (a button inside a button is invalid)
+					— it just needs to sit above the overlay.
+				-->
+				<div
+					class="relative mt-4 flex min-h-[100px] items-start gap-3 rounded-[3px] border border-ink p-3"
+				>
+					<button
+						type="button"
+						onclick={() => (detailFilmId = nextUp.id)}
+						aria-label="Details for {nextUp.title}"
+						class="absolute inset-0 cursor-pointer rounded-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+					></button>
 					{#if nextUp.posterUrl}
 						<img
 							src={nextUp.posterUrl}
@@ -333,7 +347,16 @@
 						/>
 					{/if}
 					<div class="min-w-0 flex-1">
-						<div class="font-mono text-2xs tracking-label text-muted uppercase">Up next</div>
+						<div class="flex items-center gap-1">
+							<span class="font-mono text-2xs tracking-label text-muted uppercase">Up next</span>
+							<svg
+								viewBox="0 0 16 16"
+								class="size-3 flex-none fill-none stroke-muted stroke-[1.6]"
+								aria-hidden="true"
+							>
+								<polyline points="6,3 11,8 6,13" />
+							</svg>
+						</div>
 						<div class="mt-1 truncate font-display text-2xl leading-none font-bold uppercase">
 							{nextUp.title}
 						</div>
@@ -343,7 +366,7 @@
 						<button
 							type="button"
 							onclick={() => markSeen(nextUp.id)}
-							class="mt-[9px] inline-flex cursor-pointer items-center gap-[7px] rounded-[2px] bg-ink px-[11px] py-[7px] font-mono text-2xs tracking-[0.14em] text-paper uppercase focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+							class="relative mt-[9px] inline-flex cursor-pointer items-center gap-[7px] rounded-[2px] bg-ink px-[11px] py-[7px] font-mono text-2xs tracking-[0.14em] text-paper uppercase focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 						>
 							<svg viewBox="0 0 14 14" class="size-[11px] fill-none stroke-current stroke-[3]" aria-hidden="true">
 								<polyline points="2,7.5 5.5,11 12,3.5" />
