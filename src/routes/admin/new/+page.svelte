@@ -6,14 +6,31 @@
 
 	let { data, form } = $props();
 
-	// The film as loaded is where the fields start. `untrack` because a reload
-	// after saving must not overwrite what is in the form.
-	let phase = $state(untrack(() => data.film.phase));
-	let saga = $state(untrack(() => data.film.saga));
+	/**
+	 * The form starts on the current phase and its saga: a new film is
+	 * essentially always in the phase Marvel is in, so the common case is a
+	 * form you fill in two fields of.
+	 *
+	 * `untrack` because these are the starting point, not a mirror — a failed
+	 * submit must not yank the fields out from under what you typed.
+	 */
+	let phase = $state(untrack(() => data.current?.phase ?? 1));
+	let saga = $state(untrack(() => data.current?.saga ?? ''));
+
+	const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		timeZone: 'UTC'
+	});
+
+	const fmt = (iso: string) => dateFormatter.format(new Date(`${iso}T00:00:00Z`));
+
+	const today = new Date().toISOString().slice(0, 10);
 </script>
 
 <svelte:head>
-	<title>{data.film.title} · Admin</title>
+	<title>Add a film · Admin</title>
 </svelte:head>
 
 <div class="pb-16">
@@ -51,15 +68,11 @@
 	</div>
 
 	<div class="mx-auto max-w-3xl px-5 pt-8">
-		<h1 class="font-display text-4xl font-extrabold tracking-title uppercase">
-			{data.film.title}
-		</h1>
+		<h1 class="font-display text-4xl font-extrabold tracking-title uppercase">Add a film</h1>
 
 		{#if form?.message}
 			<p
-				class="mt-4 rounded-xs border px-3 py-2 font-mono text-xs {form.ok
-					? 'border-phase-5 text-phase-5'
-					: 'border-phase-1 text-phase-1'}"
+				class="mt-4 rounded-xs border border-phase-1 px-3 py-2 font-mono text-xs text-phase-1"
 				role="status"
 			>
 				{form.message}
@@ -67,25 +80,15 @@
 		{/if}
 
 		<!--
-			`reset: false` because a reset would empty this form rather than restore
-			it. form.reset() puts inputs back to their HTML value attribute, which
-			the bound saga input and the description textarea do not have — they
-			carry their value as a property. Editing is also a repeat activity:
-			after saving you want to still be looking at what you saved.
+			A success redirects to /admin, so the only result this form renders is
+			a validation failure — which `enhance` leaves the typed-in values in
+			place for.
 		-->
-		<form
-			method="POST"
-			action="?/update"
-			use:enhance={() =>
-				async ({ update }) => {
-					await update({ reset: false });
-				}}
-		>
+		<form method="POST" action="?/create" use:enhance>
 			<label class="mt-6 flex flex-col gap-1">
 				<span class="font-mono text-2xs tracking-label text-muted uppercase">Title</span>
 				<input
 					name="title"
-					value={data.film.title}
 					required
 					maxlength="200"
 					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
@@ -97,12 +100,11 @@
 				<input
 					name="releaseDate"
 					type="date"
-					value={data.film.releaseDate}
 					required
 					class="w-48 rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 				/>
 				<span class="font-mono text-2xs tracking-note text-muted">
-					The one field nothing else corrects. Marvel moves these.
+					US theatrical. A date after {fmt(today)} renders the film as upcoming.
 				</span>
 			</label>
 
@@ -116,8 +118,10 @@
 					rows="2"
 					maxlength="300"
 					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					>{data.film.description}</textarea
-				>
+				></textarea>
+				<span class="font-mono text-2xs tracking-note text-muted">
+					One line, present tense, no spoilers past the premise.
+				</span>
 			</label>
 
 			<label class="mt-4 flex flex-col gap-1">
@@ -125,9 +129,12 @@
 				<input
 					name="posterUrl"
 					type="url"
-					value={data.film.posterUrl ?? ''}
 					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 				/>
+				<span class="font-mono text-2xs tracking-note text-muted">
+					A Wikipedia image link. No upload — paste the URL. Optional: leave blank to show a
+					placeholder until you have one.
+				</span>
 			</label>
 
 			<!--
@@ -144,7 +151,6 @@
 						name="duration"
 						type="number"
 						min="1"
-						value={data.film.duration}
 						required
 						class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 					/>
@@ -154,7 +160,6 @@
 					<span class="font-mono text-2xs tracking-label text-muted uppercase">Director</span>
 					<input
 						name="director"
-						value={data.film.director}
 						required
 						class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 					/>
@@ -168,7 +173,6 @@
 						name="postCreditsScenes"
 						type="number"
 						min="0"
-						value={data.film.postCreditsScenes}
 						required
 						class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 					/>
@@ -183,47 +187,27 @@
 					rows="4"
 					maxlength="1500"
 					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					>{data.film.recap}</textarea
-				>
+				></textarea>
+				<span class="font-mono text-2xs tracking-note text-muted">
+					Full plot, present tense, spoilers included. Only shown once a viewer has ticked the film
+					seen.
+				</span>
 			</label>
 
-			<button
-				type="submit"
-				class="mt-5 rounded-xs border border-ink bg-ink px-3 py-2 font-mono text-xs tracking-button text-paper uppercase hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-			>
-				Save
-			</button>
-		</form>
-
-		<!--
-			A native disclosure rather than confirm() or a Svelte-state reveal, so
-			the guard survives with JavaScript off — the same standard the rest of
-			the app's forms hold themselves to.
-		-->
-		<details class="group mt-12 border-t border-rule pt-4">
-			<summary
-				class="inline-block cursor-pointer rounded-xs border border-rule px-3 py-2 font-mono text-xs tracking-button text-muted uppercase select-none hover:border-phase-1 hover:text-phase-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-			>
-				Delete
-			</summary>
-
-			<div class="mt-3">
-				<p
-					class="rounded-xs border border-phase-1 px-3 py-2 font-mono text-xs leading-relaxed text-phase-1"
+			<div class="mt-5 flex items-center gap-3">
+				<button
+					type="submit"
+					class="rounded-xs border border-ink bg-ink px-3 py-2 font-mono text-xs tracking-button text-paper uppercase hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
 				>
-					Delete <b class="font-semibold">{data.film.title}</b> permanently? This also removes your
-					tick for it.
-				</p>
-
-				<form method="POST" action="?/delete" use:enhance class="mt-3">
-					<button
-						type="submit"
-						class="rounded-xs border border-phase-1 bg-transparent px-3 py-2 font-mono text-xs tracking-button text-phase-1 uppercase hover:bg-phase-1 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					>
-						Delete permanently
-					</button>
-				</form>
+					Add film
+				</button>
+				<a
+					href="/admin"
+					class="rounded-xs border border-rule px-3 py-2 font-mono text-xs tracking-button text-muted uppercase hover:border-ink hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+				>
+					Cancel
+				</a>
 			</div>
-		</details>
+		</form>
 	</div>
 </div>

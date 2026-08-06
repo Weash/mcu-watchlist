@@ -1,23 +1,8 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { enhance } from '$app/forms';
-	import PhaseField from '$lib/PhaseField.svelte';
 	import HamburgerMenu from '$lib/HamburgerMenu.svelte';
 	import { phaseColor } from '$lib/phases';
 
-	let { data, form } = $props();
-
-	/**
-	 * The Add form starts on the current phase and its saga: a new film is
-	 * essentially always in the phase Marvel is in, so the common case is a
-	 * form you fill in two fields of.
-	 *
-	 * `untrack` because these are the starting point, not a mirror — a reload
-	 * after adding a film must not yank the fields out from under a half-typed
-	 * second one.
-	 */
-	let phase = $state(untrack(() => data.current?.phase ?? 1));
-	let saga = $state(untrack(() => data.current?.saga ?? ''));
+	let { data } = $props();
 
 	const dateFormatter = new Intl.DateTimeFormat('en-GB', {
 		day: 'numeric',
@@ -28,7 +13,11 @@
 
 	const fmt = (iso: string) => dateFormatter.format(new Date(`${iso}T00:00:00Z`));
 
-	const today = new Date().toISOString().slice(0, 10);
+	// Whatever /admin/new or a delete redirected back with. One at a time —
+	// nothing can add and delete in the same round trip.
+	const notice = $derived(
+		data.added ? `Added ${data.added}.` : data.deleted ? `Deleted ${data.deleted}.` : null
+	);
 </script>
 
 <svelte:head>
@@ -70,163 +59,34 @@
 	</div>
 
 	<div class="mx-auto max-w-3xl px-5 pt-8">
-		<h1 class="font-display text-4xl font-extrabold tracking-title uppercase">Admin</h1>
+		<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+			<div>
+				<h1 class="font-display text-4xl font-extrabold tracking-title uppercase">Admin</h1>
 
-		<p class="mt-2 font-mono text-2xs tracking-label text-muted uppercase">
-			{data.films.length} films
-		</p>
+				<p class="mt-2 font-mono text-2xs tracking-label text-muted uppercase">
+					{data.films.length} films
+				</p>
+			</div>
 
-		{#if data.deleted}
-			<p class="mt-4 rounded-xs border border-rule px-3 py-2 font-mono text-xs text-muted" role="status">
-				Deleted {data.deleted}.
-			</p>
-		{/if}
+			<a
+				href="/admin/new"
+				class="rounded-xs border border-ink bg-ink px-3 py-2 font-mono text-xs tracking-button text-paper uppercase hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
+			>
+				+ Add a film
+			</a>
+		</div>
 
-		{#if form?.message}
+		{#if notice}
 			<p
-				class="mt-4 rounded-xs border px-3 py-2 font-mono text-xs {form.ok
-					? 'border-phase-5 text-phase-5'
-					: 'border-phase-1 text-phase-1'}"
+				class="mt-6 rounded-xs border border-rule px-3 py-2 font-mono text-xs text-muted"
 				role="status"
 			>
-				{form.message}
+				{notice}
 			</p>
 		{/if}
 
 		<h2
 			class="mt-8 border-b-2 border-ink pb-1.5 font-mono text-2xs tracking-label text-muted uppercase"
-		>
-			Add a film
-		</h2>
-
-		<form
-			method="POST"
-			action="?/create"
-			use:enhance={() =>
-				async ({ result, update }) => {
-					await update();
-					// A successful add resets the form, so put the defaults back
-					// rather than leaving it on phase 1 with an empty saga.
-					if (result.type === 'success') {
-						phase = data.current?.phase ?? 1;
-						saga = data.current?.saga ?? '';
-					}
-				}}
-		>
-			<label class="mt-5 flex flex-col gap-1">
-				<span class="font-mono text-2xs tracking-label text-muted uppercase">Title</span>
-				<input
-					name="title"
-					required
-					maxlength="200"
-					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-				/>
-			</label>
-
-			<label class="mt-4 flex flex-col gap-1">
-				<span class="font-mono text-2xs tracking-label text-muted uppercase">Release date</span>
-				<input
-					name="releaseDate"
-					type="date"
-					required
-					class="w-48 rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-				/>
-				<span class="font-mono text-2xs tracking-note text-muted">
-					US theatrical. A date after {fmt(today)} renders the film as upcoming.
-				</span>
-			</label>
-
-			<PhaseField sagaByPhase={data.sagaByPhase} bind:phase bind:saga />
-
-			<label class="mt-4 flex flex-col gap-1">
-				<span class="font-mono text-2xs tracking-label text-muted uppercase">Description</span>
-				<textarea
-					name="description"
-					required
-					rows="2"
-					maxlength="300"
-					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-				></textarea>
-				<span class="font-mono text-2xs tracking-note text-muted">
-					One line, present tense, no spoilers past the premise.
-				</span>
-			</label>
-
-			<label class="mt-4 flex flex-col gap-1">
-				<span class="font-mono text-2xs tracking-label text-muted uppercase">Poster URL</span>
-				<input
-					name="posterUrl"
-					type="url"
-					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-				/>
-				<span class="font-mono text-2xs tracking-note text-muted">
-					A Wikipedia image link. No upload — paste the URL. Optional: leave blank to show a
-					placeholder until you have one.
-				</span>
-			</label>
-
-			<div class="mt-4 flex gap-3">
-				<label class="flex flex-1 flex-col gap-1">
-					<span class="font-mono text-2xs tracking-label text-muted uppercase">
-						Duration (min)
-					</span>
-					<input
-						name="duration"
-						type="number"
-						min="1"
-						required
-						class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					/>
-				</label>
-
-				<label class="flex flex-1 flex-col gap-1">
-					<span class="font-mono text-2xs tracking-label text-muted uppercase">Director</span>
-					<input
-						name="director"
-						required
-						class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					/>
-				</label>
-
-				<label class="flex flex-1 flex-col gap-1">
-					<span class="font-mono text-2xs tracking-label text-muted uppercase">
-						Post-credits scenes
-					</span>
-					<input
-						name="postCreditsScenes"
-						type="number"
-						min="0"
-						required
-						class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-					/>
-				</label>
-			</div>
-
-			<label class="mt-4 flex flex-col gap-1">
-				<span class="font-mono text-2xs tracking-label text-muted uppercase">Recap</span>
-				<textarea
-					name="recap"
-					required
-					rows="4"
-					maxlength="1500"
-					class="rounded-xs border border-rule bg-transparent px-2 py-1.5 font-mono text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-				></textarea>
-				<span class="font-mono text-2xs tracking-note text-muted">
-					Full plot, present tense, spoilers included. Only shown once a viewer has ticked the
-					film seen.
-				</span>
-			</label>
-
-			<button
-				type="submit"
-				class="mt-5 rounded-xs border border-ink bg-ink px-3 py-2 font-mono text-xs tracking-button text-paper uppercase hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-phase-3"
-			>
-				Add film
-			</button>
-		</form>
-
-		<h2
-			class="mt-10 border-b-2 border-ink pb-1.5 font-mono text-2xs tracking-label text-muted uppercase"
 		>
 			Catalogue
 		</h2>
